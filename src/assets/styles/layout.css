@@ -1,24 +1,4 @@
-/* ========== 整体布局 ========== */
-.app-layout {
-  display: flex;
-  min-height: 100vh;
-}
-
-/* ========== 侧栏（桌面端） ========== */
-.app-sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: var(--sidebar-width);
-  height: 100vh;
-  background: var(--color-bg-dark);
-  color: var(--color-text-on-dark);
-  z-index: var(--z-sidebar);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  transition: transform var(--transition-normal);
-}
+/* 布局已移至 ambient.css */
 
 .sidebar-header {
   padding: var(--space-xl) var(--space-lg);
