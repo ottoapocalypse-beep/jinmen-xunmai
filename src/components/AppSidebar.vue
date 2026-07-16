@@ -15,7 +15,9 @@ function isActive(path: string) {
 <template>
   <aside class="app-sidebar" :class="{ open }">
     <div class="sidebar-header">
-      <div class="sidebar-logo">🏛️</div>
+      <div class="sidebar-logo">
+        <img src="/logo.jpg" alt="津门寻脉队徽" class="sidebar-logo-img" />
+      </div>
       <div class="sidebar-title">{{ siteConfig.title }}</div>
       <div class="sidebar-subtitle">{{ siteConfig.titleEn }}</div>
     </div>

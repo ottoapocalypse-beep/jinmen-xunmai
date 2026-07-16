@@ -6,6 +6,9 @@ import { siteConfig, navItems } from '@/data/site'
   <div class="home-page">
     <!-- Hero 区域 -->
     <section class="hero">
+      <div class="hero-logo">
+        <img src="/logo.jpg" alt="津门寻脉队徽" class="hero-logo-img" />
+      </div>
       <div class="hero-badge">{{ siteConfig.titleEn }}</div>
       <h1 class="hero-title">{{ siteConfig.title }}</h1>
       <p class="hero-subtitle">{{ siteConfig.subtitle }}</p>
@@ -45,6 +48,21 @@ import { siteConfig, navItems } from '@/data/site'
 .hero {
   text-align: center;
   padding: var(--space-3xl) 0 var(--space-2xl);
+}
+
+.hero-logo {
+  margin-bottom: var(--space-lg);
+  display: flex;
+  justify-content: center;
+}
+
+.hero-logo-img {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: var(--shadow-lg);
+  border: 3px solid var(--color-gold);
 }
 
 .hero-badge {

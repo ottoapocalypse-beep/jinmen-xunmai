@@ -27,15 +27,20 @@
 }
 
 .sidebar-logo {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   margin: 0 auto var(--space-md);
-  background: var(--color-gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
+  overflow: hidden;
+  border: 2px solid var(--color-gold);
+  box-shadow: 0 0 12px rgba(201, 168, 76, 0.3);
+}
+
+.sidebar-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .sidebar-title {
