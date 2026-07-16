@@ -23,6 +23,7 @@ import { mediaItems } from '@/data/media'
           title="天津大学校史馆全景">
         </iframe>
       </div>
+      <p class="panorama-credit">全景来源：北京科技大学校史馆</p>
     </section>
 
     <div v-if="mediaItems.length === 0" class="empty-state">
@@ -82,5 +83,13 @@ import { mediaItems } from '@/data/media'
   width: 100%;
   height: 100%;
   border: none;
+}
+
+.panorama-credit {
+  margin-top: var(--space-sm);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  text-align: right;
 }
 </style>
