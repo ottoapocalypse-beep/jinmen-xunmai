@@ -62,8 +62,8 @@
   --transition-slow: 0.5s ease;
 
   /* ========== z-index ========== */
-  --z-sidebar: 100;
+  --z-overlay: 150;
   --z-topbar: 200;
-  --z-overlay: 300;
+  --z-sidebar: 300;
   --z-modal: 400;
 }

@@ -145,15 +145,17 @@
   flex: 1;
 }
 
-/* ========== 遮罩层 ========== */
+/* ========== 遮罩层（仅拦截点击，不显示） ========== */
 .sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: transparent;
   z-index: var(--z-overlay);
   display: none;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+}
+
+.sidebar-overlay.open {
+  display: block;
 }
 
 /* ========== 主内容区 ========== */
