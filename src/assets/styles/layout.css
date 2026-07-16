@@ -89,9 +89,14 @@
 }
 
 .nav-item .nav-icon {
-  font-size: 1.1rem;
-  width: 24px;
-  text-align: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.nav-item.active .nav-icon {
+  color: var(--color-gold);
 }
 
 .nav-item .nav-label {

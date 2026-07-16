@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { siteConfig, navItems } from '@/data/site'
+import NavIcon from '@/components/NavIcon.vue'
 </script>
 
 <template>
@@ -29,7 +30,7 @@ import { siteConfig, navItems } from '@/data/site'
           :to="item.path"
           class="quick-card floating-card animate-on-scroll"
         >
-          <span class="quick-icon">{{ item.icon }}</span>
+          <NavIcon :name="item.icon" :size="32" class="quick-icon" />
           <span class="quick-label">{{ item.label }}</span>
           <span class="quick-label-en">{{ item.labelEn }}</span>
         </router-link>
@@ -150,7 +151,7 @@ import { siteConfig, navItems } from '@/data/site'
 }
 
 .quick-icon {
-  font-size: 2rem;
+  color: var(--color-gold);
   margin-bottom: var(--space-sm);
 }
 

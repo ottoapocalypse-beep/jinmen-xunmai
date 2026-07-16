@@ -36,13 +36,13 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  { path: '/', label: '首页', labelEn: 'Home', icon: '🏠' },
-  { path: '/about', label: '关于实践', labelEn: 'About', icon: '📖' },
-  { path: '/activity', label: '实践动态', labelEn: 'Updates', icon: '📰' },
-  { path: '/media', label: '影像志', labelEn: 'Media', icon: '🎬' },
-  { path: '/archive', label: '数字档案库', labelEn: 'Archive', icon: '📚' },
-  { path: '/oral-history', label: '口述史', labelEn: 'Oral History', icon: '🎙️' },
-  { path: '/map', label: '生活地图', labelEn: 'Map', icon: '🗺️' },
-  { path: '/cultural-products', label: '文创展示', labelEn: 'Cultural', icon: '🎁' },
-  { path: '/contact', label: '联系我们', labelEn: 'Contact', icon: '📬' },
+  { path: '/', label: '首页', labelEn: 'Home', icon: 'home' },
+  { path: '/about', label: '关于实践', labelEn: 'About', icon: 'about' },
+  { path: '/activity', label: '实践动态', labelEn: 'Updates', icon: 'activity' },
+  { path: '/media', label: '影像志', labelEn: 'Media', icon: 'media' },
+  { path: '/archive', label: '数字档案库', labelEn: 'Archive', icon: 'archive' },
+  { path: '/oral-history', label: '口述史', labelEn: 'Oral History', icon: 'oralHistory' },
+  { path: '/map', label: '生活地图', labelEn: 'Map', icon: 'map' },
+  { path: '/cultural-products', label: '文创展示', labelEn: 'Cultural', icon: 'cultural' },
+  { path: '/contact', label: '联系我们', labelEn: 'Contact', icon: 'contact' },
 ]

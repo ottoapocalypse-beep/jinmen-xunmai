@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { siteConfig, navItems } from '@/data/site'
+import NavIcon from '@/components/NavIcon.vue'
 
 defineProps<{ open: boolean }>()
 const emit = defineEmits<{ close: [] }>()
@@ -31,7 +32,7 @@ function isActive(path: string) {
         :class="{ active: isActive(item.path) }"
         @click="emit('close')"
       >
-        <span class="nav-icon">{{ item.icon }}</span>
+        <NavIcon :name="item.icon" class="nav-icon" />
         <span class="nav-label">
           <span>{{ item.label }}</span>
           <span class="nav-label-en">{{ item.labelEn }}</span>
