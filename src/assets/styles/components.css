@@ -1,6 +1,8 @@
 /* ========== 浮动卡片（立体感） ========== */
 .floating-card {
   background: var(--color-bg-card);
+  background-image: url('/jinmen-xunmai/assets/rice-paper.png');
+  background-repeat: repeat;
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
   box-shadow: var(--shadow-md);
@@ -38,6 +40,8 @@
 /* ========== 媒体卡片 ========== */
 .media-card {
   background: var(--color-bg-card);
+  background-image: url('/jinmen-xunmai/assets/cream-paper.png');
+  background-repeat: repeat;
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -83,6 +87,22 @@
   margin-bottom: var(--space-2xl);
   padding-bottom: var(--space-lg);
   border-bottom: 2px solid var(--color-gold-light);
+  position: relative;
+}
+
+/* 古籍装饰分隔线 */
+.page-header::before {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 30px;
+  background: url('/jinmen-xunmai/assets/ornament-border.jpg') no-repeat center;
+  background-size: contain;
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 .page-header h1 {

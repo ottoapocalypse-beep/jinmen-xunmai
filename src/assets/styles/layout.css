@@ -12,6 +12,8 @@
   width: var(--sidebar-width);
   height: 100vh;
   background: var(--color-bg-dark);
+  background-image: url('/jinmen-xunmai/assets/dark-wall.png');
+  background-repeat: repeat;
   color: var(--color-text-on-dark);
   z-index: var(--z-sidebar);
   display: flex;
