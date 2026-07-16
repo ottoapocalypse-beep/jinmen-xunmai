@@ -17,9 +17,14 @@ body {
   font-family: var(--font-serif);
   font-size: 16px;
   line-height: 1.7;
-  color: var(--color-text);
+  color: var(--color-text-on-dark);
   background-color: var(--color-bg);
   min-height: 100vh;
+}
+
+/* 页面内容区在暗底上保持可读 */
+.main-content {
+  color: var(--color-text-on-dark);
 }
 
 a {

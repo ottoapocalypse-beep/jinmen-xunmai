@@ -26,8 +26,26 @@ import { siteConfig } from '@/data/site'
 .app-footer {
   margin-top: auto;
   padding: var(--space-xl) var(--space-lg) var(--space-lg);
-  border-top: 1px solid var(--color-border-light);
-  background: var(--color-bg-alt);
+  border-top: 1px solid rgba(201, 168, 76, 0.1);
+  background: transparent;
+}
+
+.footer-info {
+  color: rgba(232, 220, 200, 0.5);
+}
+
+.footer-social {
+  color: rgba(232, 220, 200, 0.5);
+}
+
+.footer-social-label {
+  color: rgba(232, 220, 200, 0.4);
+}
+
+.social-chip {
+  background: rgba(201, 168, 76, 0.08);
+  color: var(--color-gold-light);
+  border: 1px solid rgba(201, 168, 76, 0.2);
 }
 
 .footer-inner {

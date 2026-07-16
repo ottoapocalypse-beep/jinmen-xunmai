@@ -1,31 +1,31 @@
-/* ========== 品牌色 ========== */
+/* ========== 品牌色（档案馆暗调版） ========== */
 :root {
-  --color-primary: #034484;
-  --color-primary-light: #1a5a9c;
-  --color-primary-dark: #022d5c;
-  --color-primary-subtle: #e8f0f8;
+  --color-primary: #1a3a5c;
+  --color-primary-light: #2a5a8c;
+  --color-primary-dark: #0d1f33;
+  --color-primary-subtle: rgba(26, 58, 92, 0.08);
 
   --color-gold: #c9a84c;
   --color-gold-light: #e8d5a3;
   --color-gold-dark: #a8882e;
-  --color-gold-subtle: #faf3e0;
+  --color-gold-subtle: rgba(201, 168, 76, 0.12);
 
-  --color-bg: #f8f6f1;
-  --color-bg-alt: #f0ece4;
-  --color-bg-card: #ffffff;
-  --color-bg-dark: #022d5c;
+  --color-bg: #121820;
+  --color-bg-alt: #1a232e;
+  --color-bg-card: #f7f2e9;
+  --color-bg-dark: #0d1f33;
 
-  --color-text: #2c2c2c;
-  --color-text-secondary: #6b6b6b;
-  --color-text-light: #999999;
-  --color-text-on-dark: #f0ece4;
-  --color-text-on-primary: #ffffff;
-  --color-text-on-gold: #2c2c2c;
+  --color-text: #2c2418;
+  --color-text-secondary: #6b5e4e;
+  --color-text-light: #9a8c7a;
+  --color-text-on-dark: #e8dcc8;
+  --color-text-on-primary: #e8dcc8;
+  --color-text-on-gold: #2c2418;
 
-  --color-border: #e0dcd4;
-  --color-border-light: #f0ece4;
-  --color-shadow: rgba(2, 45, 92, 0.08);
-  --color-shadow-hover: rgba(2, 45, 92, 0.15);
+  --color-border: #c4b8a4;
+  --color-border-light: rgba(196, 184, 164, 0.3);
+  --color-shadow: rgba(0, 0, 0, 0.2);
+  --color-shadow-hover: rgba(0, 0, 0, 0.35);
 
   /* ========== 字体 ========== */
   --font-serif: 'Noto Serif SC', 'SimSun', 'STSong', serif;

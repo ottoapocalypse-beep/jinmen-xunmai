@@ -178,19 +178,9 @@ const heroSlides: CarouselSlide[] = [
 .section-title {
   text-align: center;
   font-size: 1.5rem;
-  color: var(--color-primary-dark);
+  color: var(--color-gold-light);
   margin-bottom: var(--space-xl);
   position: relative;
-}
-
-.section-title::after {
-  content: '';
-  display: block;
-  width: 60px;
-  height: 3px;
-  background: var(--color-gold);
-  margin: var(--space-sm) auto 0;
-  border-radius: 2px;
 }
 
 .quick-grid {
@@ -218,7 +208,7 @@ const heroSlides: CarouselSlide[] = [
   font-family: var(--font-serif);
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--color-primary-dark);
+  color: var(--color-text);
 }
 
 .quick-label-en {

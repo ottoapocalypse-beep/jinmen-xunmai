@@ -1,6 +1,6 @@
-/* ========== 背景纹理 ========== */
+/* ========== 档案馆暗纹 ========== */
 
-/* 宣纸底纹 — 极淡的颗粒感 */
+/* 旧纸纹理 — 微弱噪点 */
 body::before {
   content: '';
   position: fixed;
@@ -11,54 +11,128 @@ body::before {
     repeating-linear-gradient(
       0deg,
       transparent,
-      transparent 2px,
-      rgba(201, 168, 76, 0.015) 2px,
-      rgba(201, 168, 76, 0.015) 4px
+      transparent 1px,
+      rgba(201, 168, 76, 0.012) 1px,
+      rgba(201, 168, 76, 0.012) 3px
     ),
     repeating-linear-gradient(
       90deg,
       transparent,
-      transparent 3px,
-      rgba(0, 0, 0, 0.008) 3px,
-      rgba(0, 0, 0, 0.008) 5px
+      transparent 2px,
+      rgba(255, 255, 255, 0.006) 2px,
+      rgba(255, 255, 255, 0.006) 4px
     );
 }
 
-/* ========== 金线装饰 ========== */
+/* 主内容区顶部暖光渐变 — 像射灯打在档案上 */
+.main-content {
+  position: relative;
+}
 
-/* 页面标题下的双金线 */
+.main-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 800px;
+  height: 300px;
+  background: radial-gradient(
+    ellipse at center top,
+    rgba(201, 168, 76, 0.06) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ========== 水纹装饰（呼应队徽江河元素） ========== */
+
+/* 页面标题下的波纹分隔线 */
+.page-header {
+  position: relative;
+}
+
 .page-header::after {
   content: '';
   display: block;
-  width: 80px;
-  height: 2px;
-  background: linear-gradient(90deg, var(--color-gold), transparent);
-  margin-top: 6px;
-  border-radius: 1px;
+  width: 100px;
+  height: 8px;
+  margin-top: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-gold) 0,
+    var(--color-gold) 4px,
+    transparent 4px,
+    transparent 6px,
+    var(--color-gold-light) 6px,
+    var(--color-gold-light) 10px,
+    transparent 10px,
+    transparent 12px
+  );
+  mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent);
+  opacity: 0.6;
 }
 
-.page-header h1 {
+/* section 标题的波纹装饰 */
+.section-title {
   position: relative;
   display: inline-block;
 }
 
-/* 卡片角标 — 左上金色角 */
-.floating-card {
-  position: relative;
+.section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--color-gold),
+    var(--color-gold-light) 40%,
+    transparent
+  );
+  border-radius: 2px;
 }
 
+/* ========== 卡片 — 档案卡样式 ========== */
+.floating-card {
+  background: var(--color-bg-card);
+  color: var(--color-text);
+  border-radius: 0;
+  box-shadow:
+    0 1px 3px var(--color-shadow),
+    inset 0 0 0 1px rgba(196, 184, 164, 0.3);
+  transition: all 0.4s ease;
+}
+
+.floating-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 6px 20px var(--color-shadow-hover),
+    inset 0 0 0 1px var(--color-gold-light);
+}
+
+.floating-card .card-title {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+
+/* 卡片角标 — 像档案袋的金属护角 */
 .floating-card::before {
   content: '';
   position: absolute;
   top: -1px;
   left: -1px;
-  width: 20px;
-  height: 20px;
-  border-top: 2px solid var(--color-gold-light);
-  border-left: 2px solid var(--color-gold-light);
-  border-radius: var(--radius-sm) 0 0 0;
-  opacity: 0;
-  transition: opacity var(--transition-normal);
+  width: 16px;
+  height: 16px;
+  border-top: 2px solid rgba(201, 168, 76, 0.3);
+  border-left: 2px solid rgba(201, 168, 76, 0.3);
+  opacity: 1;
+  transition: opacity 0.4s ease;
   pointer-events: none;
 }
 
@@ -67,22 +141,21 @@ body::before {
   position: absolute;
   bottom: -1px;
   right: -1px;
-  width: 20px;
-  height: 20px;
-  border-bottom: 2px solid var(--color-gold-light);
-  border-right: 2px solid var(--color-gold-light);
-  border-radius: 0 0 var(--radius-sm) 0;
-  opacity: 0;
-  transition: opacity var(--transition-normal);
+  width: 16px;
+  height: 16px;
+  border-bottom: 2px solid rgba(201, 168, 76, 0.3);
+  border-right: 2px solid rgba(201, 168, 76, 0.3);
+  opacity: 1;
+  transition: opacity 0.4s ease;
   pointer-events: none;
 }
 
 .floating-card:hover::before,
 .floating-card:hover::after {
-  opacity: 1;
+  border-color: var(--color-gold);
 }
 
-/* ========== 侧栏暗纹 ========== */
+/* ========== 侧栏 — 古旧目录柜风格 ========== */
 .app-sidebar::before {
   content: '';
   position: absolute;
@@ -92,7 +165,13 @@ body::before {
   bottom: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 50% 20%, rgba(201, 168, 76, 0.04) 0%, transparent 60%);
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 30px,
+      rgba(201, 168, 76, 0.015) 30px,
+      rgba(201, 168, 76, 0.015) 31px
+    );
   z-index: 0;
 }
 
@@ -103,47 +182,32 @@ body::before {
   z-index: 1;
 }
 
-/* ========== 分隔装饰 ========== */
-.section-divider {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  margin: var(--space-2xl) 0;
-  color: var(--color-gold-light);
-  font-size: 0.8rem;
+.sidebar-header {
+  border-bottom: 1px solid rgba(201, 168, 76, 0.15);
 }
 
-.section-divider::before,
-.section-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-gold-light), transparent);
+.sidebar-footer {
+  border-top: 1px solid rgba(201, 168, 76, 0.15);
 }
 
-/* ========== 动画关键帧 ========== */
+/* ========== 动画 ========== */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes breathe {
-  0%, 100% { box-shadow: 0 0 12px rgba(201, 168, 76, 0.3); }
-  50% { box-shadow: 0 0 20px rgba(201, 168, 76, 0.5); }
+  0%, 100% { box-shadow: 0 0 12px rgba(201, 168, 76, 0.2); }
+  50% { box-shadow: 0 0 24px rgba(201, 168, 76, 0.4); }
 }
 
-/* ========== 滚动进入动画 ========== */
+@keyframes pageGlow {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* 滚动进入动画 */
 .animate-on-scroll {
   opacity: 0;
   transform: translateY(24px);
@@ -155,12 +219,12 @@ body::before {
   transform: translateY(0);
 }
 
-/* 首页队徽呼吸光晕 */
+/* 首页队徽呼吸 */
 .hero-logo-img {
   animation: breathe 3s ease-in-out infinite;
 }
 
-/* ========== 导航项悬停光效 ========== */
+/* 导航悬停光效 */
 .nav-item {
   position: relative;
   overflow: hidden;
@@ -173,7 +237,7 @@ body::before {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(201, 168, 76, 0.08),
+    rgba(201, 168, 76, 0.06),
     transparent
   );
   background-size: 200% 100%;
@@ -184,4 +248,9 @@ body::before {
 
 .nav-item:hover::after {
   animation: shimmer 0.8s ease forwards;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
