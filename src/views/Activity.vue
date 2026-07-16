@@ -19,7 +19,7 @@ import { activities } from '@/data/activities'
       <article
         v-for="act in activities"
         :key="act.id"
-        class="activity-item floating-card"
+        class="activity-item floating-card animate-on-scroll"
       >
         <div class="activity-meta">
           <time class="activity-date">{{ act.date }}</time>

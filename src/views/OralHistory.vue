@@ -33,7 +33,7 @@ const searchQuery = ref('')
       <div
         v-for="item in oralHistoryItems"
         :key="item.id"
-        class="oral-item floating-card"
+        class="oral-item floating-card animate-on-scroll"
       >
         <h2 class="oral-title">{{ item.title }}</h2>
         <div class="oral-meta">

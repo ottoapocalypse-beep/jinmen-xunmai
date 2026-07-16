@@ -27,7 +27,7 @@ import { siteConfig, navItems } from '@/data/site'
           v-for="item in navItems.filter((n: { path: string }) => n.path !== '/')"
           :key="item.path"
           :to="item.path"
-          class="quick-card floating-card"
+          class="quick-card floating-card animate-on-scroll"
         >
           <span class="quick-icon">{{ item.icon }}</span>
           <span class="quick-label">{{ item.label }}</span>

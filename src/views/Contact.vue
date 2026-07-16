@@ -22,7 +22,7 @@ const platforms = [
     <section class="section">
       <h2 class="section-title">关注我们</h2>
       <div class="platform-grid">
-        <div v-for="p in platforms" :key="p.name" class="platform-card floating-card">
+        <div v-for="p in platforms" :key="p.name" class="platform-card floating-card animate-on-scroll">
           <span class="platform-icon">{{ p.icon }}</span>
           <div class="platform-info">
             <h3 class="platform-name">{{ p.name }}</h3>

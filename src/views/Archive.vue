@@ -60,7 +60,7 @@ const filteredItems = computed(() => {
     </div>
 
     <div v-else class="card-grid">
-      <div v-for="item in filteredItems" :key="item.id" class="floating-card">
+      <div v-for="item in filteredItems" :key="item.id" class="floating-card animate-on-scroll">
         <div class="card-title">{{ item.title }}</div>
         <div class="card-subtitle">
           <span class="tag">{{ ({ photo: '老照片', manuscript: '手稿', document: '文件', other: '其他' } as Record<string, string>)[item.category] }}</span>

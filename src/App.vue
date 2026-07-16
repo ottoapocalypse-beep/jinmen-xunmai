@@ -8,15 +8,28 @@ const sidebarOpen = ref(false)
 
 function toggleSidebar() {
   sidebarOpen.value = !sidebarOpen.value
+  updateScrollLock(sidebarOpen.value)
 }
 
 function closeSidebar() {
   sidebarOpen.value = false
+  updateScrollLock(false)
+}
+
+function updateScrollLock(locked: boolean) {
+  if (locked) {
+    document.body.classList.add('sidebar-open')
+  } else {
+    document.body.classList.remove('sidebar-open')
+  }
 }
 
 let mql: MediaQueryList | null = null
 function handleResize(e: MediaQueryListEvent | MediaQueryList) {
-  if (!e.matches) sidebarOpen.value = false
+  if (!e.matches) {
+    sidebarOpen.value = false
+    updateScrollLock(false)
+  }
 }
 
 onMounted(() => {

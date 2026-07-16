@@ -12,7 +12,7 @@ import { teamMembers } from '@/data/team'
 
     <!-- 实践背景 -->
     <section class="section">
-      <div class="floating-card">
+      <div class="floating-card animate-on-scroll">
         <h2 class="card-title">实践背景</h2>
         <div class="card-body">
           <p>本次社会实践以"寻根溯源·传承薪火"为主题，依托北京科技大学校史馆官方指导下的满井溯源实践团整体框架，由津门寻脉小队赴天津大学开展为期两周的校史溯源活动。</p>
@@ -28,27 +28,27 @@ import { teamMembers } from '@/data/team'
     <section class="section">
       <h2 class="section-title">实践方法</h2>
       <div class="method-grid">
-        <div class="method-item floating-card">
+        <div class="method-item floating-card animate-on-scroll">
           <span class="method-num">①</span>
           <h3>校史溯源法</h3>
           <p>赴天津大学查阅档案、考察校史馆</p>
         </div>
-        <div class="method-item floating-card">
+        <div class="method-item floating-card animate-on-scroll">
           <span class="method-num">②</span>
           <h3>深度访谈法</h3>
           <p>采访建校初期亲历者，采用生命故事访谈法</p>
         </div>
-        <div class="method-item floating-card">
+        <div class="method-item floating-card animate-on-scroll">
           <span class="method-num">③</span>
           <h3>数字化采集法</h3>
           <p>高清扫描老照片、手稿、教材等实物，建立数字档案库</p>
         </div>
-        <div class="method-item floating-card">
+        <div class="method-item floating-card animate-on-scroll">
           <span class="method-num">④</span>
           <h3>共创工作法</h3>
           <p>与老校友共同整理旧物，形成"记忆卡片"等展陈素材</p>
         </div>
-        <div class="method-item floating-card">
+        <div class="method-item floating-card animate-on-scroll">
           <span class="method-num">⑤</span>
           <h3>影像记录法</h3>
           <p>全程跟拍制作纪录片微电影，形成立体化史料收集与传播体系</p>
@@ -60,7 +60,7 @@ import { teamMembers } from '@/data/team'
     <section class="section">
       <h2 class="section-title">团队成员</h2>
       <div class="member-grid">
-        <div v-for="member in teamMembers" :key="member.id" class="member-card floating-card">
+        <div v-for="member in teamMembers" :key="member.id" class="member-card floating-card animate-on-scroll">
           <div class="member-avatar">{{ member.name[0] }}</div>
           <div class="member-info">
             <h3 class="member-name">{{ member.name }}</h3>
