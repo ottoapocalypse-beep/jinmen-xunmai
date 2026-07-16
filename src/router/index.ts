@@ -52,6 +52,12 @@ const router = createRouter({
       meta: { title: '文创展示', titleEn: 'Cultural Products' },
     },
     {
+      path: '/panorama',
+      name: 'panorama',
+      component: () => import('@/views/Panorama.vue'),
+      meta: { title: '720°全景', titleEn: 'VR Panorama' },
+    },
+    {
       path: '/contact',
       name: 'contact',
       component: () => import('@/views/Contact.vue'),

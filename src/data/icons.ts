@@ -94,4 +94,13 @@ export const icons: Record<string, IconDefinition> = {
       'M5 6l7 6 7-6',
     ],
   },
+  /** 720°全景 — 球形 */
+  panorama: {
+    viewBox: '0 0 24 24',
+    paths: [
+      'M3 12a9 9 0 1018 0 9 9 0 00-18 0z',
+      'M3 12h18',
+      'M12 3a15 15 0 010 18 15 15 0 010-18z',
+    ],
+  },
 }

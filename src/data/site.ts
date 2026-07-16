@@ -44,5 +44,6 @@ export const navItems: NavItem[] = [
   { path: '/oral-history', label: '口述史', labelEn: 'Oral History', icon: 'oralHistory' },
   { path: '/map', label: '生活地图', labelEn: 'Map', icon: 'map' },
   { path: '/cultural-products', label: '文创展示', labelEn: 'Cultural', icon: 'cultural' },
+  { path: '/panorama', label: '720°全景', labelEn: 'Panorama', icon: 'panorama' },
   { path: '/contact', label: '联系我们', labelEn: 'Contact', icon: 'contact' },
 ]
