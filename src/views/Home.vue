@@ -27,7 +27,7 @@ const heroSlides: CarouselSlide[] = [
     <HeroCarousel :slides="heroSlides" :interval="6000">
       <!-- 所有 Hero 内容作为插槽传入 -->
       <div class="hero-logo">
-        <img src="/logo.jpg" alt="津门寻脉队徽" class="hero-logo-img" />
+        <img src="/logo.jpg" alt="津门寻脉队徽" class="hero-logo-img" width="96" height="96" fetchpriority="high" />
       </div>
       <div class="hero-badge">{{ siteConfig.titleEn }}</div>
       <h1 class="hero-title">{{ siteConfig.title }}</h1>
