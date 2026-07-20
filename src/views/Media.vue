@@ -85,7 +85,6 @@ function typeIcon(t: string): string {
           <iframe
             :src="bilibiliEmbedUrl(item.bilibiliId!)"
             :title="item.title"
-            allowfullscreen
             allow="autoplay; fullscreen"
           />
         </div>
