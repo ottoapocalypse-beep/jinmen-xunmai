@@ -67,13 +67,13 @@ const sorted = [...activities].sort((a, b) => b.date.localeCompare(a.date))
 
 .tl-item { display: flex; gap: var(--space-md); position: relative; }
 
-.tl-left { display: flex; flex-direction: column; align-items: center; width: 20px; flex-shrink: 0; padding-top: 4px; }
+.tl-left { display: flex; flex-direction: column; align-items: center; width: 20px; flex-shrink: 0; padding-top: 4px; align-self: stretch; }
 
 .tl-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; z-index: 2; position: relative; }
 
 .tl-item.active .tl-dot { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent); }
 
-.tl-line { flex: 1; width: 2px; background: linear-gradient(180deg, var(--color-border) 0%, transparent 100%); min-height: 16px; }
+.tl-line { flex: 1 1 0; width: 2px; min-height: 0; background: linear-gradient(180deg, var(--color-border) 0%, transparent 100%); }
 
 .tl-item:last-child .tl-line { display: none; }
 
