@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { archiveItems } from '@/data/archive'
 import NavIcon from '@/components/NavIcon.vue'
 
+const route = useRoute()
 const searchQuery = ref('')
 const activeCategory = ref<string>('all')
 
@@ -13,6 +15,16 @@ const categories = [
   { key: 'document', label: '文件' },
   { key: 'other', label: '其他' },
 ]
+
+/** 从路由查询参数初始化搜索 */
+onMounted(() => {
+  if (route.query.search) {
+    searchQuery.value = route.query.search as string
+  }
+  if (route.query.category && categories.some(c => c.key === route.query.category)) {
+    activeCategory.value = route.query.category as string
+  }
+})
 
 const filteredItems = computed(() => {
   return archiveItems.filter((item: { title: string; description: string; category: string }) => {
