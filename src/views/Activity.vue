@@ -347,46 +347,10 @@ const lanes = computed<Lane[]>(() => {
   opacity: 0.4;
 }
 
-.empty-text {
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  color: var(--color-text-secondary);
-}
-
-/* ======== 响应式 ======== */
-@media (max-width: 768px) {
-  .swimlane-scroll {
-    margin: 0 calc(-1 * var(--space-md));
-    padding-left: var(--space-md);
-    padding-right: var(--space-md);
-  }
-
-  .lane {
-    flex: 0 0 260px;
-  }
-
-  .scroll-hint {
-    display: block;
-  }
-
-  .lane-title {
-    font-size: 0.9rem;
-  }
-}
 
 @media (min-width: 769px) {
-  .swimlane-track {
-    justify-content: center;
-  }
-
-  .lane {
-    flex: 0 0 calc((100% / 5) - var(--space-md));
-    min-width: 180px;
-    max-width: 280px;
-  }
-
-  .scroll-hint {
-    display: none;
-  }
+  .desktop-view { display: block; }
+  .mobile-view { display: none; }
 }
 </style>
+
