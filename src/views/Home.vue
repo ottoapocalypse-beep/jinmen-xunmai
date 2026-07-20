@@ -4,6 +4,7 @@ import NavIcon from '@/components/NavIcon.vue'
 import HeroCarousel from '@/components/HeroCarousel.vue'
 import type { CarouselSlide } from '@/components/HeroCarousel.vue'
 import HighlightKeywords from '@/components/HighlightKeywords.vue'
+import KnowledgeGraph from '@/components/KnowledgeGraph.vue'
 
 /** 占位轮播图 — 用 picsum.photos 生成与主题相关的随机图片 */
 const heroSlides: CarouselSlide[] = [
@@ -56,6 +57,9 @@ const heroSlides: CarouselSlide[] = [
         </router-link>
       </div>
     </section>
+
+    <!-- 校史知识图谱 -->
+    <KnowledgeGraph />
   </div>
 </template>
 
