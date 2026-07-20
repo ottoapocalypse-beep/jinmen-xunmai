@@ -1,20 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { activities } from '@/data/activities'
 import NavIcon from '@/components/NavIcon.vue'
 
-/**
- * 泳道定义：每个泳道包含名称、图标、颜色和活动列表
- */
-interface Lane {
-  id: string
-  label: string
-  icon: string
-  color: string
-  items: typeof activities
-}
-
-/** 根据标签判断活动归属泳道 */
 function getLaneId(tags: string[]): string {
   if (tags.some(t => ['设计', '视觉', '创作', '微电影'].includes(t))) return 'design'
   if (tags.some(t => ['视频', 'B站', '影像'].includes(t))) return 'media'
@@ -23,28 +10,17 @@ function getLaneId(tags: string[]): string {
   return 'team'
 }
 
-/** 泳道配置 */
-const laneConfigs: Record<string, { label: string; icon: string; color: string }> = {
-  design:    { label: '设计创作', icon: 'design', color: '#8B5CF6' },
-  media:     { label: '影像视频', icon: 'media', color: '#3B82F6' },
-  interview: { label: '采访调研', icon: 'oralHistory', color: '#10B981' },
-  promotion: { label: '宣传推送', icon: 'promotion', color: '#F59E0B' },
-  team:      { label: '团队动态', icon: 'team', color: '#EC4899' },
+const laneColors: Record<string, string> = {
+  design: '#8B5CF6', media: '#3B82F6', interview: '#10B981',
+  promotion: '#F59E0B', team: '#EC4899',
 }
 
-/** 按泳道分组 */
-const lanes = computed<Lane[]>(() => {
-  const groups: Record<string, typeof activities> = { design: [], media: [], interview: [], promotion: [], team: [] }
-  for (const act of activities) {
-    const laneId = getLaneId(act.tags)
-    groups[laneId].push(act)
-  }
-  return Object.entries(laneConfigs).map(([id, cfg]) => ({
-    id,
-    ...cfg,
-    items: groups[id].sort((a, b) => a.date.localeCompare(b.date)),
-  }))
-})
+const laneLabels: Record<string, string> = {
+  design: '设计创作', media: '影像视频', interview: '采访调研',
+  promotion: '宣传推送', team: '团队动态',
+}
+
+const sorted = [...activities].sort((a, b) => b.date.localeCompare(a.date))
 </script>
 
 <template>
@@ -55,302 +31,89 @@ const lanes = computed<Lane[]>(() => {
       <p>实时记录津门寻脉小队的实践足迹</p>
     </div>
 
-    <div v-if="activities.length === 0" class="empty-state">
-      <div class="empty-icon">
-        <NavIcon name="empty" :size="48" />
-      </div>
+    <div v-if="sorted.length === 0" class="empty-state">
+      <div class="empty-icon"><NavIcon name="empty" :size="48" /></div>
       <div class="empty-text">暂无内容，敬请期待</div>
     </div>
 
-    <!-- ====== 泳道视图 ====== -->
-    <div v-else class="swimlane-container">
-      <div class="swimlane-scroll">
-        <div class="swimlane-track">
-          <div
-            v-for="lane in lanes"
-            :key="lane.id"
-            class="lane"
-          >
-            <!-- 泳道表头 -->
-            <div class="lane-header" :style="{ '--lane-color': lane.color }">
-              <NavIcon :name="(lane.icon as any)" :size="18" class="lane-svg-icon" />
-              <span class="lane-label">{{ lane.label }}</span>
-              <span class="lane-count">{{ lane.items.length }}</span>
-            </div>
-
-            <!-- 泳道内容 -->
-            <div class="lane-body">
-              <div
-                v-for="act in lane.items"
-                :key="act.id"
-                class="lane-card"
-                :class="{ active: act.active }"
-                :style="{ '--lane-color': lane.color }"
-              >
-                <div class="lane-card-head">
-                  <time class="lane-date">{{ act.date }}</time>
-                  <span v-if="act.active" class="lane-badge">进行中</span>
-                </div>
-                <h3 class="lane-title">{{ act.title }}</h3>
-                <p class="lane-summary">{{ act.summary }}</p>
-                <div class="lane-tags">
-                  <span v-for="tag in act.tags" :key="tag" class="tag" :class="{ active: act.active }">{{ tag }}</span>
-                </div>
-                <a
-                  v-if="act.link"
-                  :href="act.link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="lane-link"
-                >
-                  阅读原文 →
-                </a>
-              </div>
-
-              <!-- 泳道空状态 -->
-              <div v-if="lane.items.length === 0" class="lane-empty">
-                暂无记录
-              </div>
-            </div>
-          </div>
+    <div v-else class="timeline">
+      <div v-for="act in sorted" :key="act.id" class="tl-item" :class="{ active: act.active }">
+        <div class="tl-left">
+          <div class="tl-dot" :style="{ background: laneColors[getLaneId(act.tags)] }" />
+          <div class="tl-line" />
         </div>
-      </div>
-
-      <!-- 滚动提示（移动端） -->
-      <div class="scroll-hint">
-        ← 左右滑动查看并行进度 →
+        <div class="tl-card">
+          <div class="tl-meta">
+            <time class="tl-date">{{ act.date }}</time>
+            <span v-if="act.active" class="tl-badge">进行中</span>
+            <span class="tl-cat" :style="{ color: laneColors[getLaneId(act.tags)] }">{{ laneLabels[getLaneId(act.tags)] }}</span>
+          </div>
+          <h3 class="tl-title">{{ act.title }}</h3>
+          <p class="tl-summary">{{ act.summary }}</p>
+          <div class="tl-tags">
+            <span v-for="tag in act.tags" :key="tag" class="tag">{{ tag }}</span>
+          </div>
+          <a v-if="act.link" :href="act.link" target="_blank" rel="noopener noreferrer" class="tl-link">阅读原文 →</a>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.activity-page {
-  max-width: 1100px;
-  margin: 0 auto;
-}
+.activity-page { max-width: 800px; margin: 0 auto; }
 
-/* ======== 泳道容器 ======== */
-.swimlane-container {
-  position: relative;
-}
+.timeline { display: flex; flex-direction: column; }
 
-.swimlane-scroll {
-  overflow-x: auto;
-  padding-bottom: var(--space-md);
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-}
+.tl-item { display: flex; gap: var(--space-md); position: relative; }
 
-.swimlane-track {
-  display: flex;
-  gap: var(--space-md);
-  min-width: min-content;
-  padding: var(--space-xs) 0;
-}
+.tl-left { display: flex; flex-direction: column; align-items: center; width: 20px; flex-shrink: 0; padding-top: 4px; }
 
-/* ======== 单个泳道 ======== */
-.lane {
-  flex: 0 0 280px;
-  scroll-snap-align: start;
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--radius-lg);
-  background: var(--color-bg-card);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  transition: box-shadow var(--transition-normal);
-}
+.tl-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; z-index: 2; position: relative; }
 
-.lane:hover {
-  box-shadow: var(--shadow-md);
-}
+.tl-item.active .tl-dot { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent); }
 
-/* ======== 泳道表头 ======== */
-.lane-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-md) var(--space-lg);
-  background: linear-gradient(135deg, var(--lane-color), color-mix(in srgb, var(--lane-color) 80%, #000));
-  color: #fff;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 0.9rem;
-}
+.tl-line { flex: 1; width: 2px; background: linear-gradient(180deg, var(--color-border) 0%, transparent 100%); min-height: 16px; }
 
-.lane-svg-icon {
-  flex-shrink: 0;
-  opacity: 0.9;
-}
+.tl-item:last-child .tl-line { display: none; }
 
-.lane-count {
-  margin-left: auto;
-  background: rgba(255, 255, 255, 0.25);
-  padding: 0 8px;
-  border-radius: 10px;
-  font-size: 0.7rem;
-  font-weight: 500;
-}
+.tl-card { flex: 1; padding-bottom: var(--space-lg); min-width: 0; }
 
-/* ======== 泳道内容 ======== */
-.lane-body {
-  padding: var(--space-sm);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  flex: 1;
-}
+.tl-meta { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; margin-bottom: var(--space-xs); }
 
-/* ======== 泳道卡片 ======== */
-.lane-card {
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  border-left: 3px solid var(--lane-color);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-}
+.tl-date { font-family: var(--font-sans); font-size: 0.8rem; color: var(--color-text-light); font-weight: 500; }
 
-.lane-card.active {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--lane-color) 8%, transparent), transparent);
-  border-left-color: var(--lane-color);
-}
+.tl-item.active .tl-date { font-weight: 600; }
 
-.lane-card:hover {
-  transform: translateX(2px);
-  box-shadow: var(--shadow-sm);
-}
+.tl-badge { display: inline-block; padding: 0 7px; font-family: var(--font-sans); font-size: 0.6rem; font-weight: 600; background: #c0392b; color: #fff; border-radius: 3px; line-height: 1.6; }
 
-.lane-card-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-xs);
-}
+.tl-cat { font-family: var(--font-sans); font-size: 0.65rem; font-weight: 500; margin-left: auto; opacity: 0.8; }
 
-.lane-date {
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  color: var(--color-text-light);
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
+.tl-title { font-size: 1rem; color: var(--color-primary-dark); margin-bottom: var(--space-xs); line-height: 1.4; }
 
-.lane-card.active .lane-date {
-  font-weight: 600;
-}
+.tl-item.active .tl-title { color: #c0392b; }
 
-.lane-badge {
-  display: inline-block;
-  padding: 0 7px;
-  font-family: var(--font-sans);
-  font-size: 0.6rem;
-  font-weight: 600;
-  background: var(--lane-color);
-  color: #fff;
-  border-radius: 3px;
-  letter-spacing: 0.02em;
-  line-height: 1.6;
-}
+.tl-summary { font-family: var(--font-sans); font-size: 0.85rem; color: var(--color-text-secondary); line-height: 1.7; }
 
-.lane-title {
-  font-size: 0.95rem;
-  color: var(--color-primary-dark);
-  margin-bottom: var(--space-xs);
-  line-height: 1.4;
-}
+.tl-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: var(--space-sm); }
 
-.lane-card.active .lane-title {
-  color: var(--lane-color);
-}
+.tl-tags .tag { font-size: 0.65rem; padding: 1px 7px; }
 
-.lane-summary {
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+.tl-link { display: inline-block; margin-top: var(--space-sm); font-family: var(--font-sans); font-size: 0.8rem; color: var(--color-gold-dark); text-decoration: none; font-weight: 500; transition: color var(--transition-fast); }
 
-.lane-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: var(--space-sm);
-}
+.tl-link:hover { color: var(--color-gold); text-decoration: underline; }
 
-.lane-tags .tag {
-  font-size: 0.65rem;
-  padding: 1px 7px;
-}
+.empty-state { text-align: center; padding: var(--space-3xl) var(--space-lg); }
 
-.lane-tags .tag.active {
-  background: color-mix(in srgb, var(--lane-color) 15%, transparent) !important;
-  color: var(--lane-color) !important;
-  border-color: color-mix(in srgb, var(--lane-color) 30%, transparent) !important;
-}
+.empty-icon { margin-bottom: var(--space-md); color: var(--color-text-light); opacity: 0.4; }
 
-.lane-link {
-  display: inline-block;
-  margin-top: var(--space-sm);
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  color: var(--lane-color);
-  text-decoration: none;
-  font-weight: 500;
-  transition: opacity var(--transition-fast);
-}
+.empty-text { font-family: var(--font-sans); font-size: 1rem; color: var(--color-text-secondary); }
 
-.lane-link:hover {
-  opacity: 0.7;
-  text-decoration: underline;
-}
-
-/* ======== 空状态 ======== */
-.lane-empty {
-  text-align: center;
-  padding: var(--space-xl) var(--space-md);
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  color: var(--color-text-light);
-}
-
-/* ======== 滚动提示 ======== */
-.scroll-hint {
-  display: none;
-  text-align: center;
-  font-family: var(--font-sans);
-  font-size: 0.7rem;
-  color: var(--color-text-light);
-  padding-top: var(--space-sm);
-  letter-spacing: 0.1em;
-  animation: fadeHint 3s ease-in-out infinite;
-}
-
-@keyframes fadeHint {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
-}
-
-/* ======== 空状态（全局） ======== */
-.empty-state {
-  text-align: center;
-  padding: var(--space-3xl) var(--space-lg);
-}
-
-.empty-icon {
-  margin-bottom: var(--space-md);
-  color: var(--color-text-light);
-  opacity: 0.4;
-}
-
-
-@media (min-width: 769px) {
-  .desktop-view { display: block; }
-  .mobile-view { display: none; }
+@media (max-width: 640px) {
+  .activity-page { max-width: 100%; }
+  .tl-left { width: 16px; }
+  .tl-dot { width: 10px; height: 10px; }
+  .tl-title { font-size: 0.95rem; }
+  .tl-summary { font-size: 0.8rem; }
 }
 </style>
-
