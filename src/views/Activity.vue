@@ -2,41 +2,48 @@
 import { computed } from 'vue'
 import { activities } from '@/data/activities'
 
-/** 按日期分组（降序），同一天的活动聚合在一起 */
-interface DayGroup {
-  date: string
-  hasActive: boolean
+/**
+ * 泳道定义：每个泳道包含名称、图标、颜色和活动列表
+ */
+interface Lane {
+  id: string
+  label: string
+  icon: string
+  color: string
   items: typeof activities
 }
 
-const dayGroups = computed<DayGroup[]>(() => {
-  const map = new Map<string, typeof activities>()
-  // 按日期降序排列
-  const sorted = [...activities].sort((a, b) => b.date.localeCompare(a.date))
-  for (const act of sorted) {
-    const group = map.get(act.date) || []
-    group.push(act)
-    map.set(act.date, group)
-  }
-  const groups: DayGroup[] = []
-  for (const [date, items] of map) {
-    groups.push({
-      date,
-      hasActive: items.some(i => i.active),
-      items,
-    })
-  }
-  return groups
-})
-
-function formatDate(dateStr: string): { month: string; day: string; weekday: string } {
-  const d = new Date(dateStr)
-  const month = `${d.getMonth() + 1}`
-  const day = `${d.getDate()}`
-  const weekdays = ['日', '一', '二', '三', '四', '五', '六']
-  const weekday = weekdays[d.getDay()]
-  return { month, day, weekday }
+/** 根据标签判断活动归属泳道 */
+function getLaneId(tags: string[]): string {
+  if (tags.some(t => ['设计', '视觉', '创作', '微电影'].includes(t))) return 'design'
+  if (tags.some(t => ['视频', 'B站', '影像'].includes(t))) return 'media'
+  if (tags.some(t => ['采访', '调研', '预约', '校史馆'].includes(t))) return 'interview'
+  if (tags.some(t => ['推送', '宣传', '集结'].includes(t))) return 'promotion'
+  return 'team'
 }
+
+/** 泳道配置 */
+const laneConfigs: Record<string, { label: string; icon: string; color: string }> = {
+  design:    { label: '设计创作', icon: '🎨', color: '#8B5CF6' },
+  media:     { label: '影像视频', icon: '🎬', color: '#3B82F6' },
+  interview: { label: '采访调研', icon: '🎙️', color: '#10B981' },
+  promotion: { label: '宣传推送', icon: '📢', color: '#F59E0B' },
+  team:      { label: '团队动态', icon: '👥', color: '#EC4899' },
+}
+
+/** 按泳道分组 */
+const lanes = computed<Lane[]>(() => {
+  const groups: Record<string, typeof activities> = { design: [], media: [], interview: [], promotion: [], team: [] }
+  for (const act of activities) {
+    const laneId = getLaneId(act.tags)
+    groups[laneId].push(act)
+  }
+  return Object.entries(laneConfigs).map(([id, cfg]) => ({
+    id,
+    ...cfg,
+    items: groups[id].sort((a, b) => a.date.localeCompare(b.date)),
+  }))
+})
 </script>
 
 <template>
@@ -47,56 +54,68 @@ function formatDate(dateStr: string): { month: string; day: string; weekday: str
       <p>实时记录津门寻脉小队的实践足迹</p>
     </div>
 
-    <div v-if="dayGroups.length === 0" class="empty-state">
+    <div v-if="activities.length === 0" class="empty-state">
       <div class="empty-icon">📝</div>
       <div class="empty-text">暂无内容，敬请期待</div>
     </div>
 
-    <div v-else class="timeline">
-      <div
-        v-for="group in dayGroups"
-        :key="group.date"
-        class="timeline-day"
-        :class="{ 'has-active': group.hasActive }"
-      >
-        <!-- 时间轴左侧：日期标 + 连线 -->
-        <div class="timeline-left">
-          <div class="timeline-date-label" :class="{ active: group.hasActive }">
-            <span class="date-month">{{ formatDate(group.date).month }}</span>
-            <span class="date-sep">/</span>
-            <span class="date-day">{{ formatDate(group.date).day }}</span>
-            <span class="date-weekday">周{{ formatDate(group.date).weekday }}</span>
-          </div>
-          <div class="timeline-line" />
-        </div>
-
-        <!-- 时间轴右侧：当日活动卡片列表 -->
-        <div class="timeline-cards">
+    <!-- ====== 泳道视图 ====== -->
+    <div v-else class="swimlane-container">
+      <div class="swimlane-scroll">
+        <div class="swimlane-track">
           <div
-            v-for="act in group.items"
-            :key="act.id"
-            class="timeline-card"
-            :class="{ active: act.active }"
+            v-for="lane in lanes"
+            :key="lane.id"
+            class="lane"
           >
-            <div class="card-head">
-              <div class="card-tags">
-                <span v-if="act.active" class="badge-active">进行中</span>
-                <span v-for="tag in act.tags" :key="tag" class="tag" :class="{ 'tag-active': act.active }">{{ tag }}</span>
+            <!-- 泳道表头 -->
+            <div class="lane-header" :style="{ '--lane-color': lane.color }">
+              <span class="lane-icon">{{ lane.icon }}</span>
+              <span class="lane-label">{{ lane.label }}</span>
+              <span class="lane-count">{{ lane.items.length }}</span>
+            </div>
+
+            <!-- 泳道内容 -->
+            <div class="lane-body">
+              <div
+                v-for="act in lane.items"
+                :key="act.id"
+                class="lane-card"
+                :class="{ active: act.active }"
+                :style="{ '--lane-color': lane.color }"
+              >
+                <div class="lane-card-head">
+                  <time class="lane-date">{{ act.date }}</time>
+                  <span v-if="act.active" class="lane-badge">进行中</span>
+                </div>
+                <h3 class="lane-title">{{ act.title }}</h3>
+                <p class="lane-summary">{{ act.summary }}</p>
+                <div class="lane-tags">
+                  <span v-for="tag in act.tags" :key="tag" class="tag" :class="{ active: act.active }">{{ tag }}</span>
+                </div>
+                <a
+                  v-if="act.link"
+                  :href="act.link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="lane-link"
+                >
+                  阅读原文 →
+                </a>
+              </div>
+
+              <!-- 泳道空状态 -->
+              <div v-if="lane.items.length === 0" class="lane-empty">
+                暂无记录
               </div>
             </div>
-            <h3 class="card-title" :class="{ active: act.active }">{{ act.title }}</h3>
-            <p class="card-summary">{{ act.summary }}</p>
-            <a
-              v-if="act.link"
-              :href="act.link"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="card-link"
-            >
-              阅读原文 →
-            </a>
           </div>
         </div>
+      </div>
+
+      <!-- 滚动提示（移动端） -->
+      <div class="scroll-hint">
+        ← 左右滑动查看并行进度 →
       </div>
     </div>
   </div>
@@ -104,206 +123,266 @@ function formatDate(dateStr: string): { month: string; day: string; weekday: str
 
 <style scoped>
 .activity-page {
-  max-width: 800px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
-/* ======== 时间轴容器 ======== */
-.timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+/* ======== 泳道容器 ======== */
+.swimlane-container {
   position: relative;
 }
 
-/* ======== 每一天 ======== */
-.timeline-day {
-  display: flex;
-  gap: var(--space-lg);
-  position: relative;
+.swimlane-scroll {
+  overflow-x: auto;
+  padding-bottom: var(--space-md);
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* ======== 左侧：日期标签 + 连线 ======== */
-.timeline-left {
+.swimlane-track {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 72px;
-  flex-shrink: 0;
-  padding-top: 4px;
+  gap: var(--space-md);
+  min-width: min-content;
+  padding: var(--space-xs) 0;
 }
 
-.timeline-date-label {
+/* ======== 单个泳道 ======== */
+.lane {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow var(--transition-normal);
+}
+
+.lane:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ======== 泳道表头 ======== */
+.lane-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  background: linear-gradient(135deg, var(--lane-color), color-mix(in srgb, var(--lane-color) 80%, #000));
+  color: #fff;
   font-family: var(--font-sans);
-  line-height: 1.1;
-  z-index: 2;
-  transition: all var(--transition-fast);
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
-.timeline-date-label.active {
-  border-color: #c0392b;
-  background: rgba(192, 57, 43, 0.06);
+.lane-icon {
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
-.date-month {
-  font-size: 0.65rem;
-  color: var(--color-text-light);
+.lane-count {
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
   font-weight: 500;
 }
 
-.date-sep {
-  display: none;
-}
-
-.date-day {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--color-primary-dark);
-  line-height: 1.2;
-}
-
-.timeline-date-label.active .date-day {
-  color: #c0392b;
-}
-
-.date-weekday {
-  font-size: 0.6rem;
-  color: var(--color-text-light);
-  margin-top: 2px;
-}
-
-/* 连接线 */
-.timeline-line {
-  flex: 1;
-  width: 2px;
-  background: linear-gradient(180deg, var(--color-border) 0%, transparent 100%);
-  min-height: 24px;
-  margin-top: 4px;
-}
-
-.timeline-day:last-child .timeline-line {
-  display: none;
-}
-
-.timeline-day.has-active .timeline-line {
-  background: linear-gradient(180deg, rgba(192, 57, 43, 0.3) 0%, transparent 100%);
-}
-
-/* ======== 右侧：活动卡片列表 ======== */
-.timeline-cards {
-  flex: 1;
-  padding-bottom: var(--space-xl);
+/* ======== 泳道内容 ======== */
+.lane-body {
+  padding: var(--space-sm);
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  flex: 1;
 }
 
-.timeline-card {
+/* ======== 泳道卡片 ======== */
+.lane-card {
   padding: var(--space-md);
-  background: var(--color-bg-card);
   border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-light);
-  transition: all var(--transition-fast);
+  background: var(--color-bg);
+  border-left: 3px solid var(--lane-color);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.timeline-card.active {
-  border-color: rgba(192, 57, 43, 0.15);
-  background: rgba(192, 57, 43, 0.03);
-  box-shadow: 0 2px 8px rgba(192, 57, 43, 0.06);
+.lane-card.active {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--lane-color) 8%, transparent), transparent);
+  border-left-color: var(--lane-color);
 }
 
-.card-head {
+.lane-card:hover {
+  transform: translateX(2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.lane-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
   margin-bottom: var(--space-xs);
 }
 
-.card-tags {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  flex-wrap: wrap;
+.lane-date {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
-.badge-active {
+.lane-card.active .lane-date {
+  font-weight: 600;
+}
+
+.lane-badge {
   display: inline-block;
-  padding: 1px 8px;
+  padding: 0 7px;
   font-family: var(--font-sans);
   font-size: 0.6rem;
   font-weight: 600;
-  background: #c0392b;
+  background: var(--lane-color);
   color: #fff;
-  letter-spacing: 0.05em;
-  border-radius: 2px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
 }
 
-.tag-active {
-  background: rgba(192, 57, 43, 0.08) !important;
-  color: #c0392b !important;
-  border-color: rgba(192, 57, 43, 0.2) !important;
-}
-
-.card-title {
-  font-size: 1rem;
+.lane-title {
+  font-size: 0.95rem;
   color: var(--color-primary-dark);
   margin-bottom: var(--space-xs);
   line-height: 1.4;
-  transition: color var(--transition-fast);
 }
 
-.card-title.active {
-  color: #c0392b;
+.lane-card.active .lane-title {
+  color: var(--lane-color);
 }
 
-.card-summary {
+.lane-summary {
   font-family: var(--font-sans);
-  font-size: 0.83rem;
+  font-size: 0.8rem;
   color: var(--color-text-secondary);
-  line-height: 1.7;
-  margin-bottom: var(--space-sm);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.timeline-card.active .card-summary {
-  color: var(--color-text);
+.lane-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: var(--space-sm);
 }
 
-/* ======== 原文链接 ======== */
-.card-link {
+.lane-tags .tag {
+  font-size: 0.65rem;
+  padding: 1px 7px;
+}
+
+.lane-tags .tag.active {
+  background: color-mix(in srgb, var(--lane-color) 15%, transparent) !important;
+  color: var(--lane-color) !important;
+  border-color: color-mix(in srgb, var(--lane-color) 30%, transparent) !important;
+}
+
+.lane-link {
+  display: inline-block;
+  margin-top: var(--space-sm);
   font-family: var(--font-sans);
-  font-size: 0.78rem;
-  color: var(--color-gold-dark);
+  font-size: 0.75rem;
+  color: var(--lane-color);
   text-decoration: none;
   font-weight: 500;
-  transition: color var(--transition-fast);
+  transition: opacity var(--transition-fast);
 }
 
-.card-link:hover {
-  color: var(--color-gold);
+.lane-link:hover {
+  opacity: 0.7;
   text-decoration: underline;
 }
 
 /* ======== 空状态 ======== */
+.lane-empty {
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+}
+
+/* ======== 滚动提示 ======== */
+.scroll-hint {
+  display: none;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  color: var(--color-text-light);
+  padding-top: var(--space-sm);
+  letter-spacing: 0.1em;
+  animation: fadeHint 3s ease-in-out infinite;
+}
+
+@keyframes fadeHint {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* ======== 空状态（全局） ======== */
+.empty-state {
+  text-align: center;
+  padding: var(--space-3xl) var(--space-lg);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+}
+
+.empty-text {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+/* ======== 响应式 ======== */
 @media (max-width: 768px) {
-  .timeline-day {
-    gap: var(--space-md);
+  .swimlane-scroll {
+    margin: 0 calc(-1 * var(--space-md));
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
   }
 
-  .timeline-left {
-    width: 56px;
+  .lane {
+    flex: 0 0 260px;
   }
 
-  .date-day {
-    font-size: 1.1rem;
+  .scroll-hint {
+    display: block;
   }
 
-  .card-title {
-    font-size: 0.92rem;
+  .lane-title {
+    font-size: 0.9rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .swimlane-track {
+    justify-content: center;
+  }
+
+  .lane {
+    flex: 0 0 calc((100% / 5) - var(--space-md));
+    min-width: 180px;
+    max-width: 280px;
+  }
+
+  .scroll-hint {
+    display: none;
   }
 }
 </style>
