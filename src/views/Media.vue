@@ -1,23 +1,22 @@
 <script setup lang="ts">
 import { mediaItems } from '@/data/media'
-import { siteConfig } from '@/data/site'
 import NavIcon from '@/components/NavIcon.vue'
-
-/** 根据 bilibiliId 构造可播放的嵌入 URL */
-function bilibiliEmbedUrl(id: string): string {
-  // 支持 av 号 和 BV 号
-  if (id.startsWith('BV')) {
-    return `https://player.bilibili.com/player.html?bvid=${id}&autoplay=0&highQuality=1`
-  }
-  if (id.startsWith('av')) {
-    return `https://player.bilibili.com/player.html?aid=${id.slice(2)}&autoplay=0&highQuality=1`
-  }
-  return id
-}
 
 /** 根据 bilibiliId 构造跳转链接 */
 function bilibiliPageUrl(id: string): string {
   return `https://www.bilibili.com/video/${id}/`
+}
+
+/** 视频类型对应的中文字符串 */
+function typeLabel(type: string): string {
+  const map: Record<string, string> = { documentary: '纪录片', 'short-video': '短视频', vlog: 'Vlog', interview: '访谈' }
+  return map[type] ?? type
+}
+
+/** 视频类型对应的图标名 */
+function typeIcon(type: string): string {
+  const map: Record<string, string> = { documentary: 'media', 'short-video': 'music', vlog: 'video', interview: 'oralHistory' }
+  return map[type] ?? 'media'
 }
 </script>
 
@@ -37,49 +36,42 @@ function bilibiliPageUrl(id: string): string {
     </div>
 
     <div v-else class="media-content">
-      <!-- 精选展映：第一个视频作为主播放器 -->
-      <div v-if="mediaItems[0]?.bilibiliId" class="featured-player">
-        <div class="player-wrapper">
-          <iframe
-            :src="bilibiliEmbedUrl(mediaItems[0].bilibiliId!)"
-            :title="mediaItems[0].title"
-            allowfullscreen
-            allow="autoplay; fullscreen"
-            loading="lazy"
-          />
-        </div>
-        <div class="featured-info">
-          <h2 class="featured-title">{{ mediaItems[0].title }}</h2>
-          <span class="featured-date">{{ mediaItems[0].date }}</span>
-          <span class="tag">{{ ({ documentary: '纪录片', 'short-video': '短视频', vlog: 'Vlog', interview: '访谈' } as Record<string, string>)[mediaItems[0].type] }}</span>
-          <span v-if="mediaItems[0].duration" class="featured-duration">{{ mediaItems[0].duration }}</span>
-          <p class="featured-desc">{{ mediaItems[0].description }}</p>
-        </div>
-      </div>
-
-      <!-- 全部视频列表 -->
       <div class="card-grid">
-        <a
+        <div
           v-for="item in mediaItems"
           :key="item.id"
-          :href="item.bilibiliId ? bilibiliPageUrl(item.bilibiliId) : item.externalLink || '#'"
-          target="_blank"
-          rel="noopener noreferrer"
           class="media-card"
         >
-          <div class="media-cover">
-            {{ item.type === 'documentary' ? '🎥' : item.type === 'short-video' ? '📱' : item.type === 'vlog' ? '📹' : '🎙️' }}
-            <span class="media-play-hint">▶</span>
+          <!-- 视频封面区 -->
+          <div class="media-cover" :class="{ 'is-featured': item === mediaItems[0] }">
+            <NavIcon :name="typeIcon(item.type) as any" :size="item === mediaItems[0] ? 48 : 32" class="media-type-icon" />
+            <div class="media-cover-badge">{{ typeLabel(item.type) }}</div>
+            <!-- 播放按钮 -->
+            <a
+              v-if="item.bilibiliId"
+              :href="bilibiliPageUrl(item.bilibiliId)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="play-btn"
+              @click.stop
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <polygon points="8,5 19,12 8,19" />
+              </svg>
+              <span class="play-btn-label">在B站观看</span>
+            </a>
           </div>
+
+          <!-- 视频信息区 -->
           <div class="media-info">
-            <div class="media-title">{{ item.title }}</div>
             <div class="media-meta">
-              <span class="tag">{{ ({ documentary: '纪录片', 'short-video': '短视频', vlog: 'Vlog', interview: '访谈' } as Record<string, string>)[item.type] }}</span>
+              <time class="media-date">{{ item.date }}</time>
               <span v-if="item.duration" class="media-duration">{{ item.duration }}</span>
             </div>
+            <h3 class="media-title">{{ item.title }}</h3>
             <p class="media-desc">{{ item.description }}</p>
           </div>
-        </a>
+        </div>
       </div>
     </div>
   </div>
@@ -91,130 +83,108 @@ function bilibiliPageUrl(id: string): string {
   margin: 0 auto;
 }
 
-/* ======== 精选展映 ======== */
-.featured-player {
-  margin-bottom: var(--space-2xl);
-  background: var(--color-bg-alt);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-}
-
-.player-wrapper {
-  position: relative;
-  width: 100%;
-  padding-top: 56.25%; /* 16:9 */
-  background: #000;
-}
-
-.player-wrapper iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-.featured-info {
-  padding: var(--space-lg);
-}
-
-.featured-title {
-  font-size: 1.15rem;
-  color: var(--color-primary-dark);
-  margin-bottom: var(--space-sm);
-}
-
-.featured-date,
-.featured-duration {
-  display: inline-block;
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  color: var(--color-text-light);
-  margin-right: var(--space-sm);
-}
-
-.featured-desc {
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  line-height: 1.7;
-  margin-top: var(--space-sm);
-}
-
-/* ======== 视频列表 ======== */
+/* ======== 视频卡片网格 ======== */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--space-md);
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
 }
 
+/* ======== 单张卡片 ======== */
 .media-card {
   display: flex;
-  gap: var(--space-md);
-  padding: var(--space-md);
+  gap: var(--space-lg);
+  padding: var(--space-lg);
   background: var(--color-bg-card);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  text-decoration: none;
-  color: inherit;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: box-shadow var(--transition-normal);
+  border: 1px solid var(--color-border-light);
 }
 
 .media-card:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
 
+/* ======== 封面区 ======== */
 .media-cover {
   flex-shrink: 0;
-  width: 80px;
-  height: 80px;
+  width: 240px;
+  min-height: 150px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--color-gold-subtle);
-  border-radius: var(--radius-sm);
+  gap: var(--space-sm);
+  background: linear-gradient(135deg, var(--color-bg-dark) 0%, #1a2744 100%);
+  border-radius: var(--radius-md);
   position: relative;
+  overflow: hidden;
+}
+
+.media-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 50%, rgba(201,168,76,0.08) 0%, transparent 70%),
+    repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(255,255,255,0.02) 20px, rgba(255,255,255,0.02) 21px);
+  pointer-events: none;
+}
+
+.media-cover.is-featured {
+  width: 320px;
+  min-height: 200px;
 }
 
 .media-type-icon {
-  color: var(--color-gold-dark);
-  opacity: 0.6;
+  color: var(--color-gold);
+  opacity: 0.5;
+  z-index: 1;
 }
 
-.media-play-hint {
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-  width: 24px;
-  height: 24px;
+.media-cover-badge {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.play-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: var(--space-xs);
+  padding: 6px 14px;
   background: var(--color-gold);
-  color: #fff;
-  border-radius: 50%;
-  font-size: 0.7rem;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
+  color: var(--color-text-on-gold);
+  border-radius: 20px;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+  z-index: 1;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  margin-top: var(--space-sm);
 }
 
-.media-card:hover .media-play-hint {
-  opacity: 1;
+.play-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(201,168,76,0.4);
 }
 
+.play-btn-label {
+  white-space: nowrap;
+}
+
+/* ======== 信息区 ======== */
 .media-info {
   flex: 1;
   min-width: 0;
-}
-
-.media-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-primary-dark);
-  margin-bottom: var(--space-xs);
-  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .media-meta {
@@ -224,35 +194,69 @@ function bilibiliPageUrl(id: string): string {
   margin-bottom: var(--space-xs);
 }
 
+.media-date {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  font-weight: 500;
+}
+
 .media-duration {
   font-family: var(--font-sans);
   font-size: 0.75rem;
   color: var(--color-text-light);
+  padding: 0 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+}
+
+.media-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  margin-bottom: var(--space-sm);
+  line-height: 1.4;
 }
 
 .media-desc {
   font-family: var(--font-sans);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--color-text-secondary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1.7;
 }
 
-@media (max-width: 640px) {
-  .card-grid {
-    grid-template-columns: 1fr;
-  }
+/* ======== 空状态 ======== */
+.empty-state {
+  text-align: center;
+  padding: var(--space-3xl) var(--space-lg);
+}
 
+.empty-icon {
+  margin-bottom: var(--space-md);
+  color: var(--color-text-light);
+  opacity: 0.4;
+}
+
+.empty-text {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+/* ======== 响应式 ======== */
+@media (max-width: 768px) {
   .media-card {
     flex-direction: column;
   }
 
-  .media-cover {
+  .media-cover,
+  .media-cover.is-featured {
     width: 100%;
-    height: 120px;
+    min-height: 160px;
+  }
+
+  .media-title {
+    font-size: 1rem;
   }
 }
 </style>
