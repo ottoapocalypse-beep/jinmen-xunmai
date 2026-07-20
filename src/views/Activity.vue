@@ -1,5 +1,42 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { activities } from '@/data/activities'
+
+/** 按日期分组（降序），同一天的活动聚合在一起 */
+interface DayGroup {
+  date: string
+  hasActive: boolean
+  items: typeof activities
+}
+
+const dayGroups = computed<DayGroup[]>(() => {
+  const map = new Map<string, typeof activities>()
+  // 按日期降序排列
+  const sorted = [...activities].sort((a, b) => b.date.localeCompare(a.date))
+  for (const act of sorted) {
+    const group = map.get(act.date) || []
+    group.push(act)
+    map.set(act.date, group)
+  }
+  const groups: DayGroup[] = []
+  for (const [date, items] of map) {
+    groups.push({
+      date,
+      hasActive: items.some(i => i.active),
+      items,
+    })
+  }
+  return groups
+})
+
+function formatDate(dateStr: string): { month: string; day: string; weekday: string } {
+  const d = new Date(dateStr)
+  const month = `${d.getMonth() + 1}`
+  const day = `${d.getDate()}`
+  const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+  const weekday = weekdays[d.getDay()]
+  return { month, day, weekday }
+}
 </script>
 
 <template>
@@ -10,46 +47,55 @@ import { activities } from '@/data/activities'
       <p>实时记录津门寻脉小队的实践足迹</p>
     </div>
 
-    <div v-if="activities.length === 0" class="empty-state">
+    <div v-if="dayGroups.length === 0" class="empty-state">
       <div class="empty-icon">📝</div>
       <div class="empty-text">暂无内容，敬请期待</div>
     </div>
 
     <div v-else class="timeline">
       <div
-        v-for="act in activities"
-        :key="act.id"
-        class="timeline-item"
-        :class="{ active: act.active }"
+        v-for="group in dayGroups"
+        :key="group.date"
+        class="timeline-day"
+        :class="{ 'has-active': group.hasActive }"
       >
-        <!-- 时间轴左侧：日期 + 节点 -->
+        <!-- 时间轴左侧：日期标 + 连线 -->
         <div class="timeline-left">
-          <div class="timeline-node" :class="{ active: act.active }">
-            <span v-if="act.active" class="timeline-pulse" />
+          <div class="timeline-date-label" :class="{ active: group.hasActive }">
+            <span class="date-month">{{ formatDate(group.date).month }}</span>
+            <span class="date-sep">/</span>
+            <span class="date-day">{{ formatDate(group.date).day }}</span>
+            <span class="date-weekday">周{{ formatDate(group.date).weekday }}</span>
           </div>
           <div class="timeline-line" />
         </div>
 
-        <!-- 时间轴右侧：内容卡片 -->
-        <div class="timeline-card" :class="{ active: act.active }">
-          <div class="timeline-meta">
-            <time class="timeline-date">{{ act.date }}</time>
-            <span v-if="act.active" class="timeline-badge">进行中</span>
-            <div class="timeline-tags">
-              <span v-for="tag in act.tags" :key="tag" class="tag" :class="{ 'tag-active': act.active }">{{ tag }}</span>
-            </div>
-          </div>
-          <h3 class="timeline-title" :class="{ active: act.active }">{{ act.title }}</h3>
-          <p class="timeline-summary">{{ act.summary }}</p>
-          <a
-            v-if="act.link"
-            :href="act.link"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="timeline-link"
+        <!-- 时间轴右侧：当日活动卡片列表 -->
+        <div class="timeline-cards">
+          <div
+            v-for="act in group.items"
+            :key="act.id"
+            class="timeline-card"
+            :class="{ active: act.active }"
           >
-            阅读原文 →
-          </a>
+            <div class="card-head">
+              <div class="card-tags">
+                <span v-if="act.active" class="badge-active">进行中</span>
+                <span v-for="tag in act.tags" :key="tag" class="tag" :class="{ 'tag-active': act.active }">{{ tag }}</span>
+              </div>
+            </div>
+            <h3 class="card-title" :class="{ active: act.active }">{{ act.title }}</h3>
+            <p class="card-summary">{{ act.summary }}</p>
+            <a
+              v-if="act.link"
+              :href="act.link"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="card-link"
+            >
+              阅读原文 →
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -70,54 +116,68 @@ import { activities } from '@/data/activities'
   position: relative;
 }
 
-/* ======== 每一项 ======== */
-.timeline-item {
+/* ======== 每一天 ======== */
+.timeline-day {
   display: flex;
   gap: var(--space-lg);
   position: relative;
 }
 
-/* ======== 左侧：日期 + 节点 + 连线 ======== */
+/* ======== 左侧：日期标签 + 连线 ======== */
 .timeline-left {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 30px;
+  width: 72px;
   flex-shrink: 0;
-  padding-top: 6px;
+  padding-top: 4px;
 }
 
-.timeline-node {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--color-border);
-  border: 2px solid var(--color-bg);
-  position: relative;
+.timeline-date-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  font-family: var(--font-sans);
+  line-height: 1.1;
   z-index: 2;
-  flex-shrink: 0;
-  transition: all var(--transition-normal);
+  transition: all var(--transition-fast);
 }
 
-.timeline-node.active {
-  background: #c0392b;
+.timeline-date-label.active {
   border-color: #c0392b;
-  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.2);
+  background: rgba(192, 57, 43, 0.06);
 }
 
-/* 进行中的脉冲动画 */
-.timeline-pulse {
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 2px solid rgba(192, 57, 43, 0.3);
-  animation: pulse 2s ease-in-out infinite;
+.date-month {
+  font-size: 0.65rem;
+  color: var(--color-text-light);
+  font-weight: 500;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.6); opacity: 0; }
-  100% { transform: scale(1); opacity: 0.6; }
+.date-sep {
+  display: none;
+}
+
+.date-day {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  line-height: 1.2;
+}
+
+.timeline-date-label.active .date-day {
+  color: #c0392b;
+}
+
+.date-weekday {
+  font-size: 0.6rem;
+  color: var(--color-text-light);
+  margin-top: 2px;
 }
 
 /* 连接线 */
@@ -125,118 +185,125 @@ import { activities } from '@/data/activities'
   flex: 1;
   width: 2px;
   background: linear-gradient(180deg, var(--color-border) 0%, transparent 100%);
-  min-height: 20px;
+  min-height: 24px;
+  margin-top: 4px;
 }
 
-.timeline-item:last-child .timeline-line {
+.timeline-day:last-child .timeline-line {
   display: none;
 }
 
-/* ======== 右侧：内容卡片 ======== */
-.timeline-card {
+.timeline-day.has-active .timeline-line {
+  background: linear-gradient(180deg, rgba(192, 57, 43, 0.3) 0%, transparent 100%);
+}
+
+/* ======== 右侧：活动卡片列表 ======== */
+.timeline-cards {
   flex: 1;
   padding-bottom: var(--space-xl);
-  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.timeline-card {
+  padding: var(--space-md);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  transition: all var(--transition-fast);
 }
 
 .timeline-card.active {
-  padding: var(--space-md) var(--space-md) var(--space-md) 0;
+  border-color: rgba(192, 57, 43, 0.15);
+  background: rgba(192, 57, 43, 0.03);
+  box-shadow: 0 2px 8px rgba(192, 57, 43, 0.06);
 }
 
-.timeline-meta {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
+.card-head {
   margin-bottom: var(--space-xs);
 }
 
-.timeline-date {
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  color: var(--color-text-light);
-  font-weight: 500;
+.card-tags {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
 }
 
-.timeline-card.active .timeline-date {
-  color: #c0392b;
-  font-weight: 600;
-}
-
-.timeline-badge {
+.badge-active {
   display: inline-block;
-  padding: 0 8px;
+  padding: 1px 8px;
   font-family: var(--font-sans);
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 600;
   background: #c0392b;
   color: #fff;
   letter-spacing: 0.05em;
+  border-radius: 2px;
 }
 
-.timeline-tags {
-  display: flex;
-  gap: var(--space-xs);
-}
-
-/* 进行中的标签也变红 */
 .tag-active {
   background: rgba(192, 57, 43, 0.08) !important;
   color: #c0392b !important;
   border-color: rgba(192, 57, 43, 0.2) !important;
 }
 
-.timeline-title {
-  font-size: 1.05rem;
+.card-title {
+  font-size: 1rem;
   color: var(--color-primary-dark);
   margin-bottom: var(--space-xs);
+  line-height: 1.4;
   transition: color var(--transition-fast);
 }
 
-.timeline-title.active {
+.card-title.active {
   color: #c0392b;
 }
 
-.timeline-summary {
+.card-summary {
   font-family: var(--font-sans);
-  font-size: 0.85rem;
+  font-size: 0.83rem;
   color: var(--color-text-secondary);
   line-height: 1.7;
+  margin-bottom: var(--space-sm);
 }
 
-.timeline-card.active .timeline-summary {
+.timeline-card.active .card-summary {
   color: var(--color-text);
 }
 
 /* ======== 原文链接 ======== */
-.timeline-link {
-  display: inline-block;
-  margin-top: var(--space-sm);
+.card-link {
   font-family: var(--font-sans);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--color-gold-dark);
   text-decoration: none;
   font-weight: 500;
   transition: color var(--transition-fast);
 }
 
-.timeline-link:hover {
+.card-link:hover {
   color: var(--color-gold);
   text-decoration: underline;
 }
 
 /* ======== 空状态 ======== */
 @media (max-width: 768px) {
-  .timeline-item {
+  .timeline-day {
     gap: var(--space-md);
   }
 
   .timeline-left {
-    width: 24px;
+    width: 56px;
   }
 
-  .timeline-title {
-    font-size: 0.95rem;
+  .date-day {
+    font-size: 1.1rem;
+  }
+
+  .card-title {
+    font-size: 0.92rem;
   }
 }
 </style>
