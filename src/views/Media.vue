@@ -1,22 +1,43 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { mediaItems } from '@/data/media'
+import { siteConfig } from '@/data/site'
 import NavIcon from '@/components/NavIcon.vue'
+
+/** 记录每个视频是否已点击加载 */
+const loaded = ref<Record<string, boolean>>({})
+
+function loadVideo(id: string) {
+  loaded.value[id] = true
+}
+
+/** 根据 bilibiliId 构造可播放的嵌入 URL（点击后才加载） */
+function bilibiliEmbedUrl(id: string): string {
+  // highQuality=1 最高画质，autoplay=1 点击后自动播放
+  if (id.startsWith('BV')) {
+    return `https://player.bilibili.com/player.html?bvid=${id}&autoplay=1&highQuality=1&danmaku=0`
+  }
+  if (id.startsWith('av')) {
+    return `https://player.bilibili.com/player.html?aid=${id.slice(2)}&autoplay=1&highQuality=1&danmaku=0`
+  }
+  return id
+}
 
 /** 根据 bilibiliId 构造跳转链接 */
 function bilibiliPageUrl(id: string): string {
   return `https://www.bilibili.com/video/${id}/`
 }
 
-/** 视频类型对应的中文字符串 */
-function typeLabel(type: string): string {
+/** 视频类型标签映射 */
+function typeLabel(t: string): string {
   const map: Record<string, string> = { documentary: '纪录片', 'short-video': '短视频', vlog: 'Vlog', interview: '访谈' }
-  return map[type] ?? type
+  return map[t] || t
 }
 
-/** 视频类型对应的图标名 */
-function typeIcon(type: string): string {
+/** 视频类型图标映射 */
+function typeIcon(t: string): string {
   const map: Record<string, string> = { documentary: 'media', 'short-video': 'music', vlog: 'video', interview: 'oralHistory' }
-  return map[type] ?? 'media'
+  return map[t] || 'media'
 }
 </script>
 
@@ -36,41 +57,56 @@ function typeIcon(type: string): string {
     </div>
 
     <div v-else class="media-content">
-      <div class="card-grid">
-        <div
-          v-for="item in mediaItems"
-          :key="item.id"
-          class="media-card"
-        >
-          <!-- 视频封面区 -->
-          <div class="media-cover" :class="{ 'is-featured': item === mediaItems[0] }">
-            <NavIcon :name="typeIcon(item.type) as any" :size="item === mediaItems[0] ? 48 : 32" class="media-type-icon" />
-            <div class="media-cover-badge">{{ typeLabel(item.type) }}</div>
-            <!-- 播放按钮 -->
-            <a
-              v-if="item.bilibiliId"
-              :href="bilibiliPageUrl(item.bilibiliId)"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="play-btn"
-              @click.stop
-            >
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                <polygon points="8,5 19,12 8,19" />
+      <!-- 精选展映：点击加载播放器 -->
+      <div
+        v-for="(item, idx) in mediaItems"
+        :key="item.id"
+        class="video-block"
+        :class="{ featured: idx === 0 }"
+      >
+        <!-- 点击前：自定义视频卡片 -->
+        <div v-if="!loaded[item.id]" class="video-poster" @click="loadVideo(item.id)">
+          <div class="poster-bg">
+            <NavIcon :name="typeIcon(item.type)" :size="idx === 0 ? 56 : 36" class="poster-icon" />
+          </div>
+          <div class="poster-overlay">
+            <div class="poster-play">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polygon points="10,8 16,12 10,16" fill="currentColor" stroke="none" />
               </svg>
-              <span class="play-btn-label">在B站观看</span>
-            </a>
-          </div>
-
-          <!-- 视频信息区 -->
-          <div class="media-info">
-            <div class="media-meta">
-              <time class="media-date">{{ item.date }}</time>
-              <span v-if="item.duration" class="media-duration">{{ item.duration }}</span>
             </div>
-            <h3 class="media-title">{{ item.title }}</h3>
-            <p class="media-desc">{{ item.description }}</p>
+            <span class="poster-hint">点击播放 · B站源</span>
           </div>
+        </div>
+
+        <!-- 点击后：B站播放器 -->
+        <div v-else class="player-wrapper" :class="{ featured: idx === 0 }">
+          <iframe
+            :src="bilibiliEmbedUrl(item.bilibiliId!)"
+            :title="item.title"
+            allowfullscreen
+            allow="autoplay; fullscreen"
+          />
+        </div>
+
+        <!-- 视频信息 -->
+        <div class="video-info" :class="{ featured: idx === 0 }">
+          <h2 :class="['video-title', { large: idx === 0 }]">{{ item.title }}</h2>
+          <div class="video-meta">
+            <span class="video-date">{{ item.date }}</span>
+            <span class="tag">{{ typeLabel(item.type) }}</span>
+            <span v-if="item.duration" class="video-duration">{{ item.duration }}</span>
+          </div>
+          <p class="video-desc">{{ item.description }}</p>
+          <a
+            :href="bilibiliPageUrl(item.bilibiliId!)"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="video-external"
+          >
+            在 B站 打开 →
+          </a>
         </div>
       </div>
     </div>
@@ -83,146 +119,163 @@ function typeIcon(type: string): string {
   margin: 0 auto;
 }
 
-/* ======== 视频卡片网格 ======== */
-.card-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-lg);
-}
-
-/* ======== 单张卡片 ======== */
-.media-card {
-  display: flex;
-  gap: var(--space-lg);
-  padding: var(--space-lg);
+/* ======== 视频块 ======== */
+.video-block {
+  margin-bottom: var(--space-2xl);
   background: var(--color-bg-card);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
   transition: box-shadow var(--transition-normal);
-  border: 1px solid var(--color-border-light);
 }
 
-.media-card:hover {
-  box-shadow: var(--shadow-lg);
+.video-block:hover {
+  box-shadow: var(--shadow-md);
 }
 
-/* ======== 封面区 ======== */
-.media-cover {
-  flex-shrink: 0;
-  width: 240px;
-  min-height: 150px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  background: linear-gradient(135deg, var(--color-bg-dark) 0%, #1a2744 100%);
-  border-radius: var(--radius-md);
+.video-block.featured {
+  box-shadow: var(--shadow-md);
+}
+
+/* ======== 视频海报（点击加载前） ======== */
+.video-poster {
   position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  background: linear-gradient(135deg, var(--color-bg-dark) 0%, var(--color-primary) 100%);
+  cursor: pointer;
   overflow: hidden;
 }
 
-.media-cover::before {
-  content: '';
+.poster-bg {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse at 30% 50%, rgba(201,168,76,0.08) 0%, transparent 70%),
-    repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(255,255,255,0.02) 20px, rgba(255,255,255,0.02) 21px);
-  pointer-events: none;
-}
-
-.media-cover.is-featured {
-  width: 320px;
-  min-height: 200px;
-}
-
-.media-type-icon {
-  color: var(--color-gold);
-  opacity: 0.5;
-  z-index: 1;
-}
-
-.media-cover-badge {
-  font-family: var(--font-sans);
-  font-size: 0.65rem;
-  color: rgba(255,255,255,0.5);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  z-index: 1;
-}
-
-.play-btn {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-  padding: 6px 14px;
-  background: var(--color-gold);
-  color: var(--color-text-on-gold);
-  border-radius: 20px;
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-decoration: none;
-  z-index: 1;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  margin-top: var(--space-sm);
-}
-
-.play-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 20px rgba(201,168,76,0.4);
-}
-
-.play-btn-label {
-  white-space: nowrap;
-}
-
-/* ======== 信息区 ======== */
-.media-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
 }
 
-.media-meta {
+.poster-icon {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.poster-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  background: rgba(0, 0, 0, 0.25);
+  transition: background var(--transition-fast);
+}
+
+.video-poster:hover .poster-overlay {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.poster-play {
+  color: #fff;
+  opacity: 0.85;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.video-poster:hover .poster-play {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.poster-hint {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.05em;
+}
+
+/* ======== 播放器（点击后） ======== */
+.player-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  background: #000;
+}
+
+.player-wrapper.featured {
+  padding-top: 56.25%;
+}
+
+.player-wrapper iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ======== 视频信息 ======== */
+.video-info {
+  padding: var(--space-lg);
+}
+
+.video-info.featured {
+  padding: var(--space-lg);
+}
+
+.video-title {
+  font-size: 1rem;
+  color: var(--color-primary-dark);
+  margin-bottom: var(--space-xs);
+  line-height: 1.4;
+}
+
+.video-title.large {
+  font-size: 1.2rem;
+}
+
+.video-meta {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  margin-bottom: var(--space-xs);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
 }
 
-.media-date {
+.video-date {
   font-family: var(--font-sans);
   font-size: 0.8rem;
   color: var(--color-text-light);
   font-weight: 500;
 }
 
-.media-duration {
+.video-duration {
   font-family: var(--font-sans);
   font-size: 0.75rem;
   color: var(--color-text-light);
-  padding: 0 6px;
-  border: 1px solid var(--color-border);
-  border-radius: 3px;
 }
 
-.media-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--color-primary-dark);
-  margin-bottom: var(--space-sm);
-  line-height: 1.4;
-}
-
-.media-desc {
+.video-desc {
   font-family: var(--font-sans);
   font-size: 0.85rem;
   color: var(--color-text-secondary);
   line-height: 1.7;
+  margin-top: var(--space-sm);
+}
+
+.video-external {
+  display: inline-block;
+  margin-top: var(--space-sm);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--color-gold-dark);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.video-external:hover {
+  color: var(--color-gold);
+  text-decoration: underline;
 }
 
 /* ======== 空状态 ======== */
@@ -243,19 +296,8 @@ function typeIcon(type: string): string {
   color: var(--color-text-secondary);
 }
 
-/* ======== 响应式 ======== */
-@media (max-width: 768px) {
-  .media-card {
-    flex-direction: column;
-  }
-
-  .media-cover,
-  .media-cover.is-featured {
-    width: 100%;
-    min-height: 160px;
-  }
-
-  .media-title {
+@media (max-width: 640px) {
+  .video-title.large {
     font-size: 1rem;
   }
 }
