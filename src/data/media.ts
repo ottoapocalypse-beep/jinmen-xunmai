@@ -13,13 +13,13 @@ export interface MediaItem {
 }
 
 export const mediaItems: MediaItem[] = [
-  // {
-  //   id: 'media-1',
-  //   title: '津门寻脉 · 纪录片',
-  //   type: 'documentary',
-  //   bilibiliId: 'BVxxxxxxxxxx',
-  //   duration: '08:30',
-  //   date: '2026-07-30',
-  //   description: '完整记录本次社会实践全过程',
-  // },
+  {
+    id: 'media-1',
+    title: '北京科技大学津门寻脉小队 前来报到啦！',
+    type: 'short-video',
+    bilibiliId: 'av116928974690924',
+    duration: '00:25',
+    date: '2026-07-16',
+    description: '津门寻脉小队集结完毕！我们是北京科技大学满井溯源实践团津门寻脉小队，2026年暑期奔赴天津大学，溯源1952年院系调整的历史脉络。别让历史消失在风中！',
+  },
 ]

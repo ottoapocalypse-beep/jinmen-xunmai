@@ -2,11 +2,11 @@
 import { siteConfig } from '@/data/site'
 
 const platforms = [
-  { name: '微信公众号', icon: '💬', account: siteConfig.social.wechat },
-  { name: 'B站', icon: '📺', account: siteConfig.social.bilibili },
-  { name: '抖音', icon: '🎵', account: siteConfig.social.douyin },
-  { name: '快手', icon: '📱', account: siteConfig.social.kuaishou },
-  { name: '小红书', icon: '📕', account: siteConfig.social.xiaohongshu },
+  { name: '微信公众号', icon: '💬', account: siteConfig.social.wechat, link: siteConfig.socialLinks.wechat },
+  { name: 'B站', icon: '📺', account: siteConfig.social.bilibili, link: siteConfig.socialLinks.bilibili },
+  { name: '抖音', icon: '🎵', account: siteConfig.social.douyin, link: siteConfig.socialLinks.douyin },
+  { name: '快手', icon: '📱', account: siteConfig.social.kuaishou, link: siteConfig.socialLinks.kuaishou },
+  { name: '小红书', icon: '📕', account: siteConfig.social.xiaohongshu, link: siteConfig.socialLinks.xiaohongshu },
 ]
 </script>
 
@@ -22,13 +22,20 @@ const platforms = [
     <section class="section">
       <h2 class="section-title">关注我们</h2>
       <div class="platform-grid">
-        <div v-for="p in platforms" :key="p.name" class="platform-card floating-card animate-on-scroll">
+        <a
+          v-for="p in platforms"
+          :key="p.name"
+          :href="p.link"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="platform-card floating-card animate-on-scroll"
+        >
           <span class="platform-icon">{{ p.icon }}</span>
           <div class="platform-info">
             <h3 class="platform-name">{{ p.name }}</h3>
             <span class="platform-account">{{ p.account }}</span>
           </div>
-        </div>
+        </a>
       </div>
     </section>
 
@@ -77,6 +84,15 @@ const platforms = [
   align-items: center;
   gap: var(--space-md);
   padding: var(--space-lg);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.platform-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .platform-icon {

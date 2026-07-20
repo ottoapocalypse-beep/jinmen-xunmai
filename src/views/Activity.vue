@@ -41,6 +41,15 @@ import { activities } from '@/data/activities'
           </div>
           <h3 class="timeline-title" :class="{ active: act.active }">{{ act.title }}</h3>
           <p class="timeline-summary">{{ act.summary }}</p>
+          <a
+            v-if="act.link"
+            :href="act.link"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="timeline-link"
+          >
+            阅读原文 →
+          </a>
         </div>
       </div>
     </div>
@@ -197,6 +206,23 @@ import { activities } from '@/data/activities'
 
 .timeline-card.active .timeline-summary {
   color: var(--color-text);
+}
+
+/* ======== 原文链接 ======== */
+.timeline-link {
+  display: inline-block;
+  margin-top: var(--space-sm);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--color-gold-dark);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.timeline-link:hover {
+  color: var(--color-gold);
+  text-decoration: underline;
 }
 
 /* ======== 空状态 ======== */

@@ -17,13 +17,13 @@ export const siteConfig = {
     kuaishou: '津门寻脉',
     xiaohongshu: '津门寻脉',
   },
-  // 社交媒体链接（后续填入实际链接）
+  // 社交媒体链接
   socialLinks: {
-    wechat: '',
-    bilibili: '',
-    douyin: '',
-    kuaishou: '',
-    xiaohongshu: '',
+    wechat: 'https://mp.weixin.qq.com/s/HzjxSXjgTGitKw4I5pmZrA',
+    bilibili: 'https://space.bilibili.com/3707025980656060',
+    douyin: 'https://v.douyin.com/6Dr7zTRTxSs/',
+    kuaishou: 'https://live.kuaishou.com/profile/3x38a9t8uq6vmsm',
+    xiaohongshu: 'https://www.xiaohongshu.com/user/profile/6853d308000000001b021119',
   },
 }
 

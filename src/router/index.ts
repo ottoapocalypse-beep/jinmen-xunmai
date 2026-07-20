@@ -1,7 +1,29 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 
+/** 每条路由的滚动位置缓存 */
+const scrollCache = new Map<string, { top: number }>()
+
 const router = createRouter({
   history: createWebHashHistory(),
+  scrollBehavior(to, from, savedPosition) {
+    // 保存当前页面的滚动位置
+    if (from.name) {
+      scrollCache.set(from.name as string, { top: window.scrollY })
+    }
+
+    // 浏览器前进/后退 → 恢复浏览器保存的位置
+    if (savedPosition) {
+      return savedPosition
+    }
+
+    // 有缓存 → 恢复上次的位置（侧栏点击回到同一页面时）
+    if (to.name && scrollCache.has(to.name as string)) {
+      return scrollCache.get(to.name as string)!
+    }
+
+    // 首次访问 → 滚动到顶部
+    return { top: 0 }
+  },
   routes: [
     {
       path: '/',

@@ -27,4 +27,13 @@ export const activities: Activity[] = [
     tags: ['动态', '调研'],
     active: true,
   },
+  {
+    id: 'act-3',
+    title: '津门寻脉 | 团队集结：别让历史消失在风中',
+    date: '2026-07-13',
+    summary: '首发推送！津门寻脉小队正式亮相。我们是北京科技大学满井溯源实践团津门寻脉小队，奔赴天津大学溯源校史根脉。从满井出发，把根脉传下去。',
+    link: 'https://mp.weixin.qq.com/s/HzjxSXjgTGitKw4I5pmZrA',
+    tags: ['推送', '集结'],
+    active: true,
+  },
 ]

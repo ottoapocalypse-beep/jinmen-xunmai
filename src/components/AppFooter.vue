@@ -1,5 +1,13 @@
 <script setup lang="ts">
 import { siteConfig } from '@/data/site'
+
+const socialLinks = [
+  { name: '微信公众号', link: siteConfig.socialLinks.wechat },
+  { name: 'B站', link: siteConfig.socialLinks.bilibili },
+  { name: '抖音', link: siteConfig.socialLinks.douyin },
+  { name: '快手', link: siteConfig.socialLinks.kuaishou },
+  { name: '小红书', link: siteConfig.socialLinks.xiaohongshu },
+]
 </script>
 
 <template>
@@ -12,11 +20,14 @@ import { siteConfig } from '@/data/site'
       </div>
       <div class="footer-social">
         <span class="footer-social-label">关注我们：</span>
-        <span class="social-chip">微信公众号</span>
-        <span class="social-chip">B站</span>
-        <span class="social-chip">抖音</span>
-        <span class="social-chip">快手</span>
-        <span class="social-chip">小红书</span>
+        <a
+          v-for="s in socialLinks"
+          :key="s.name"
+          :href="s.link"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="social-chip"
+        >{{ s.name }}</a>
       </div>
     </div>
   </footer>
@@ -75,6 +86,14 @@ import { siteConfig } from '@/data/site'
   color: var(--color-gold-dark);
   border: 1px solid var(--color-gold-light);
   font-size: 0.75rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.social-chip:hover {
+  background: var(--color-gold);
+  color: var(--color-text-on-gold);
 }
 
 @media (max-width: 768px) {

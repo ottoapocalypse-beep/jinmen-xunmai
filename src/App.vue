@@ -5,6 +5,8 @@ import AppTopbar from '@/components/AppTopbar.vue'
 import AppFooter from '@/components/AppFooter.vue'
 
 const sidebarOpen = ref(false)
+/** 打开侧栏前的滚动位置，关闭时恢复 */
+let scrollYBeforeOpen = 0
 
 function toggleSidebar() {
   sidebarOpen.value = !sidebarOpen.value
@@ -18,9 +20,19 @@ function closeSidebar() {
 
 function updateScrollLock(locked: boolean) {
   if (locked) {
+    // 打开前保存当前滚动位置
+    scrollYBeforeOpen = window.scrollY
     document.body.classList.add('sidebar-open')
+    // 用 top 偏移保持滚动位置，避免 position:fixed 跳到顶部
+    document.body.style.top = `-${scrollYBeforeOpen}px`
   } else {
     document.body.classList.remove('sidebar-open')
+    document.body.style.top = ''
+    // 恢复滚动位置
+    if (scrollYBeforeOpen > 0) {
+      window.scrollTo(0, scrollYBeforeOpen)
+    }
+    scrollYBeforeOpen = 0
   }
 }
 
