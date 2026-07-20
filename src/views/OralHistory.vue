@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { oralHistoryItems } from '@/data/oralHistory'
+import NavIcon from '@/components/NavIcon.vue'
 
 const searchQuery = ref('')
 </script>
@@ -25,7 +26,9 @@ const searchQuery = ref('')
     </div>
 
     <div v-if="oralHistoryItems.length === 0" class="empty-state">
-      <div class="empty-icon">🎙️</div>
+      <div class="empty-icon">
+        <NavIcon name="oralHistory" :size="48" />
+      </div>
       <div class="empty-text">口述史资料整理中，敬请期待</div>
     </div>
 

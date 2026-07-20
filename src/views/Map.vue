@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { mapPoints } from '@/data/map'
+import NavIcon from '@/components/NavIcon.vue'
 </script>
 
 <template>
@@ -11,7 +12,9 @@ import { mapPoints } from '@/data/map'
     </div>
 
     <div v-if="mapPoints.length === 0" class="empty-state">
-      <div class="empty-icon">🗺️</div>
+      <div class="empty-icon">
+        <NavIcon name="map" :size="48" />
+      </div>
       <div class="empty-text">地图内容整理中，敬请期待</div>
     </div>
 

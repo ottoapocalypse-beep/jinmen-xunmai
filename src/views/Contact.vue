@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { siteConfig } from '@/data/site'
 
+import NavIcon from '@/components/NavIcon.vue'
+
 const platforms = [
-  { name: '微信公众号', icon: '💬', account: siteConfig.social.wechat, link: siteConfig.socialLinks.wechat },
-  { name: 'B站', icon: '📺', account: siteConfig.social.bilibili, link: siteConfig.socialLinks.bilibili },
-  { name: '抖音', icon: '🎵', account: siteConfig.social.douyin, link: siteConfig.socialLinks.douyin },
-  { name: '快手', icon: '📱', account: siteConfig.social.kuaishou, link: siteConfig.socialLinks.kuaishou },
-  { name: '小红书', icon: '📕', account: siteConfig.social.xiaohongshu, link: siteConfig.socialLinks.xiaohongshu },
+  { name: '微信公众号', icon: 'wechat', account: siteConfig.social.wechat, link: siteConfig.socialLinks.wechat },
+  { name: 'B站', icon: 'video', account: siteConfig.social.bilibili, link: siteConfig.socialLinks.bilibili },
+  { name: '抖音', icon: 'music', account: siteConfig.social.douyin, link: siteConfig.socialLinks.douyin },
+  { name: '快手', icon: 'music', account: siteConfig.social.kuaishou, link: siteConfig.socialLinks.kuaishou },
+  { name: '小红书', icon: 'book', account: siteConfig.social.xiaohongshu, link: siteConfig.socialLinks.xiaohongshu },
 ]
 </script>
 
@@ -30,7 +32,7 @@ const platforms = [
           rel="noopener noreferrer"
           class="platform-card floating-card animate-on-scroll"
         >
-          <span class="platform-icon">{{ p.icon }}</span>
+          <NavIcon :name="(p.icon as any)" :size="28" class="platform-icon" />
           <div class="platform-info">
             <h3 class="platform-name">{{ p.name }}</h3>
             <span class="platform-account">{{ p.account }}</span>
@@ -96,7 +98,8 @@ const platforms = [
 }
 
 .platform-icon {
-  font-size: 2rem;
+  color: var(--color-gold-dark);
+  flex-shrink: 0;
 }
 
 .platform-info {

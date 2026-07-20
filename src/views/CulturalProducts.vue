@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { culturalProducts } from '@/data/culturalProducts'
+import NavIcon from '@/components/NavIcon.vue'
 </script>
 
 <template>
@@ -11,7 +12,9 @@ import { culturalProducts } from '@/data/culturalProducts'
     </div>
 
     <div v-if="culturalProducts.length === 0" class="empty-state">
-      <div class="empty-icon">🎁</div>
+      <div class="empty-icon">
+        <NavIcon name="gift" :size="48" />
+      </div>
       <div class="empty-text">文创产品设计中，敬请期待</div>
     </div>
 

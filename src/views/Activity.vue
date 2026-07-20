@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { activities } from '@/data/activities'
+import NavIcon from '@/components/NavIcon.vue'
 
 /**
  * 泳道定义：每个泳道包含名称、图标、颜色和活动列表
@@ -24,11 +25,11 @@ function getLaneId(tags: string[]): string {
 
 /** 泳道配置 */
 const laneConfigs: Record<string, { label: string; icon: string; color: string }> = {
-  design:    { label: '设计创作', icon: '🎨', color: '#8B5CF6' },
-  media:     { label: '影像视频', icon: '🎬', color: '#3B82F6' },
-  interview: { label: '采访调研', icon: '🎙️', color: '#10B981' },
-  promotion: { label: '宣传推送', icon: '📢', color: '#F59E0B' },
-  team:      { label: '团队动态', icon: '👥', color: '#EC4899' },
+  design:    { label: '设计创作', icon: 'design', color: '#8B5CF6' },
+  media:     { label: '影像视频', icon: 'media', color: '#3B82F6' },
+  interview: { label: '采访调研', icon: 'oralHistory', color: '#10B981' },
+  promotion: { label: '宣传推送', icon: 'promotion', color: '#F59E0B' },
+  team:      { label: '团队动态', icon: 'team', color: '#EC4899' },
 }
 
 /** 按泳道分组 */
@@ -55,7 +56,9 @@ const lanes = computed<Lane[]>(() => {
     </div>
 
     <div v-if="activities.length === 0" class="empty-state">
-      <div class="empty-icon">📝</div>
+      <div class="empty-icon">
+        <NavIcon name="empty" :size="48" />
+      </div>
       <div class="empty-text">暂无内容，敬请期待</div>
     </div>
 
@@ -70,7 +73,7 @@ const lanes = computed<Lane[]>(() => {
           >
             <!-- 泳道表头 -->
             <div class="lane-header" :style="{ '--lane-color': lane.color }">
-              <span class="lane-icon">{{ lane.icon }}</span>
+              <NavIcon :name="(lane.icon as any)" :size="18" class="lane-svg-icon" />
               <span class="lane-label">{{ lane.label }}</span>
               <span class="lane-count">{{ lane.items.length }}</span>
             </div>
@@ -176,9 +179,9 @@ const lanes = computed<Lane[]>(() => {
   font-size: 0.9rem;
 }
 
-.lane-icon {
-  font-size: 1.1rem;
-  line-height: 1;
+.lane-svg-icon {
+  flex-shrink: 0;
+  opacity: 0.9;
 }
 
 .lane-count {
@@ -339,8 +342,9 @@ const lanes = computed<Lane[]>(() => {
 }
 
 .empty-icon {
-  font-size: 3rem;
   margin-bottom: var(--space-md);
+  color: var(--color-text-light);
+  opacity: 0.4;
 }
 
 .empty-text {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { mediaItems } from '@/data/media'
 import { siteConfig } from '@/data/site'
+import NavIcon from '@/components/NavIcon.vue'
 
 /** 根据 bilibiliId 构造可播放的嵌入 URL */
 function bilibiliEmbedUrl(id: string): string {
@@ -29,7 +30,9 @@ function bilibiliPageUrl(id: string): string {
     </div>
 
     <div v-if="mediaItems.length === 0" class="empty-state">
-      <div class="empty-icon">🎬</div>
+      <div class="empty-icon">
+        <NavIcon name="media" :size="48" />
+      </div>
       <div class="empty-text">视频内容正在制作中，敬请期待</div>
     </div>
 
@@ -170,10 +173,14 @@ function bilibiliPageUrl(id: string): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
   background: var(--color-gold-subtle);
   border-radius: var(--radius-sm);
   position: relative;
+}
+
+.media-type-icon {
+  color: var(--color-gold-dark);
+  opacity: 0.6;
 }
 
 .media-play-hint {

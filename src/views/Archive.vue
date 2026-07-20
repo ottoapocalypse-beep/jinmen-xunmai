@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { archiveItems } from '@/data/archive'
+import NavIcon from '@/components/NavIcon.vue'
 
 const searchQuery = ref('')
 const activeCategory = ref<string>('all')
@@ -55,7 +56,9 @@ const filteredItems = computed(() => {
     </div>
 
     <div v-if="filteredItems.length === 0" class="empty-state">
-      <div class="empty-icon">📚</div>
+      <div class="empty-icon">
+        <NavIcon name="archive" :size="48" />
+      </div>
       <div class="empty-text">暂无匹配的档案资料</div>
     </div>
 
