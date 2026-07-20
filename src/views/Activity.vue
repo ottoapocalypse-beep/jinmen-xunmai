@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { activities } from '@/data/activities'
 import NavIcon from '@/components/NavIcon.vue'
-import HighlightKeywords from '@/components/HighlightKeywords.vue'
 
 function getLaneId(tags: string[]): string {
   if (tags.some(t => ['设计', '视觉', '创作', '微电影'].includes(t))) return 'design'
@@ -50,7 +49,7 @@ const sorted = [...activities].sort((a, b) => b.date.localeCompare(a.date))
             <span class="tl-cat" :style="{ color: laneColors[getLaneId(act.tags)] }">{{ laneLabels[getLaneId(act.tags)] }}</span>
           </div>
           <h3 class="tl-title">{{ act.title }}</h3>
-          <p class="tl-summary"><HighlightKeywords :text="act.summary" /></p>
+          <p class="tl-summary">{{ act.summary }}</p>
           <div class="tl-tags">
             <span v-for="tag in act.tags" :key="tag" class="tag">{{ tag }}</span>
           </div>

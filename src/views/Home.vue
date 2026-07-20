@@ -3,7 +3,6 @@ import { siteConfig, navItems } from '@/data/site'
 import NavIcon from '@/components/NavIcon.vue'
 import HeroCarousel from '@/components/HeroCarousel.vue'
 import type { CarouselSlide } from '@/components/HeroCarousel.vue'
-import HighlightKeywords from '@/components/HighlightKeywords.vue'
 import KnowledgeGraph from '@/components/KnowledgeGraph.vue'
 
 /** 占位轮播图 — 用 picsum.photos 生成与主题相关的随机图片 */
@@ -34,7 +33,7 @@ const heroSlides: CarouselSlide[] = [
       <div class="hero-badge">{{ siteConfig.titleEn }}</div>
       <h1 class="hero-title">{{ siteConfig.title }}</h1>
       <p class="hero-subtitle">{{ siteConfig.subtitle }}</p>
-      <p class="hero-desc"><HighlightKeywords :text="siteConfig.description" /></p>
+      <p class="hero-desc">{{ siteConfig.description }}</p>
       <div class="hero-actions">
         <router-link to="/about" class="btn btn-hero btn-hero-primary">了解实践 →</router-link>
         <router-link to="/activity" class="btn btn-hero btn-hero-outline">最新动态 →</router-link>
