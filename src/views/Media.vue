@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { mediaItems } from '@/data/media'
-import { siteConfig } from '@/data/site'
 import NavIcon from '@/components/NavIcon.vue'
 
 /** 记录每个视频是否已点击加载 */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { nodes, edges, nodeColors } from '@/data/knowledgeGraph'
 
@@ -70,8 +70,6 @@ function handleNodeClick(node: typeof nodes[0]) {
   }
 }
 
-/** 节点背景光晕动画 */
-const glowFilter = 'url(#glow)'
 </script>
 
 <template>
