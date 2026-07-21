@@ -88,7 +88,7 @@ function initGraph() {
     .attr('class', 'link-line')
     .attr('marker-end', 'url(#arrow-d3)')
 
-  // 连���标签
+  // 连线标签
   const linkLabelGroup = svg.append('g').attr('class', 'link-labels')
   const linkLabels = linkLabelGroup.selectAll('text')
     .data(links.filter(l => l.label))
@@ -96,7 +96,6 @@ function initGraph() {
     .attr('class', 'link-label')
     .attr('text-anchor', 'middle')
     .attr('dy', -6)
-    .attr('font-weight', '700')
     .text(d => d.label!)
 
   // ---- 粒子连线 ----
@@ -134,16 +133,23 @@ function initGraph() {
   }
   animateParticles()
 
-  /** 根据文字长度计算节点半径 */
-  function nodeRadius(d: typeof nodes[0]): number {
-    const lines = d.label.split('\\n')
-    const maxChars = Math.max(...lines.map(l => l.length))
-    // 每个字约 8px，加 padding
-    return Math.max(18, maxChars * 4.5 + 8)
-  }
-
   // ---- 节点 ----
   const nodeGroup = svg.append('g').attr('class', 'nodes')
+
+  // 计算每个节点的半径：基于最长行字数
+  function nodeRadius(d: typeof nodes[0]): number {
+    const lines = d.label.split('\\n')
+    const maxLen = Math.max(...lines.map(l => l.length))
+    return Math.max(18, Math.min(38, 12 + maxLen * 4.5))
+  }
+
+  function nodeFontSize(d: typeof nodes[0]): number {
+    const lines = d.label.split('\\n')
+    const maxLen = Math.max(...lines.map(l => l.length))
+    if (maxLen <= 3) return 0.75
+    if (maxLen <= 5) return 0.65
+    return 0.55
+  }
 
   const nodeCircles = nodeGroup.selectAll('circle')
     .data(nodes)
@@ -156,17 +162,16 @@ function initGraph() {
     .style('cursor', 'pointer')
 
   // 节点光晕（hover 时显示）
-  const glowRadius = (d: typeof nodes[0]) => nodeRadius(d) + 6
   const nodeGlow = nodeGroup.selectAll('circle.glow')
     .data(nodes)
     .join('circle')
     .attr('class', 'glow')
-    .attr('r', d => glowRadius(d))
+    .attr('r', d => nodeRadius(d) + 8)
     .attr('fill', d => nodeColors[d.type])
     .attr('opacity', 0)
     .attr('pointer-events', 'none')
 
-  // 节点标签（分两行）
+  // 节点标签
   const nodeLabels = nodeGroup.selectAll('text')
     .data(nodes)
     .join('text')
@@ -175,18 +180,21 @@ function initGraph() {
     .attr('dominant-baseline', 'middle')
     .style('pointer-events', 'none')
     .style('user-select', 'none')
+    .style('font-size', d => `${nodeFontSize(d)}rem`)
+    .style('font-weight', '600')
     .text(d => d.label)
 
-  // 处理换行标签
+  // 处理换行标签 + 文字描边使其在节点内清晰
   nodeLabels.each(function (d) {
     const el = d3.select(this)
     const lines = d.label.split('\\n')
     if (lines.length > 1) {
       el.text('')
+      const lineH = nodeFontSize(d) <= 0.6 ? 10 : 12
       lines.forEach((line, i) => {
         el.append('tspan')
           .attr('x', 0)
-          .attr('dy', i === 0 ? 0 : 12)
+          .attr('dy', i === 0 ? 0 : lineH)
           .text(line)
       })
     }
@@ -228,7 +236,7 @@ function initGraph() {
     .force('link', d3.forceLink(links).id((d: any) => d.id).distance(80).strength(0.3))
     .force('charge', d3.forceManyBody().strength(-200))
     .force('center', d3.forceCenter(w / 2, h / 2))
-    .force('collide', d3.forceCollide().radius(d => nodeRadius(d as any) + 5))
+    .force('collide', d3.forceCollide().radius((d: any) => nodeRadius(d) + 8))
     .alphaDecay(0.05)
     .on('tick', () => {
       // 更新连线路径
@@ -253,9 +261,6 @@ function initGraph() {
       nodeCircles.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y)
       nodeGlow.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y)
       nodeLabels.attr('x', (d: any) => d.x).attr('y', (d: any) => d.y)
-      // 更新节点半径（文字动态变化）
-      nodeCircles.attr('r', (d: any) => nodeRadius(d))
-      nodeGlow.attr('r', (d: any) => nodeRadius(d) + 6)
     })
 
   // ---- 拖拽 ----
@@ -352,7 +357,7 @@ function isConnected(nodeId: string, targetId: string): boolean {
   font-family: var(--font-sans);
   font-size: 0.6rem;
   font-weight: 700;
-  fill: var(--color-text);
+  fill: var(--color-text-secondary);
   pointer-events: none;
   user-select: none;
   transition: opacity var(--transition-fast);
@@ -360,11 +365,15 @@ function isConnected(nodeId: string, targetId: string): boolean {
 
 .graph-container :deep(.node-label-d3) {
   font-family: var(--font-sans);
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-weight: 700;
   fill: #fff;
   cursor: pointer;
   transition: opacity var(--transition-fast);
+  paint-order: stroke;
+  stroke: rgba(0,0,0,0.3);
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .graph-container :deep(.glow) {
