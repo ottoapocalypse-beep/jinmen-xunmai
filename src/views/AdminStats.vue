@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { activities } from '@/data/activities'
 import { mediaItems } from '@/data/media'
 import { archiveItems } from '@/data/archive'
@@ -10,9 +9,12 @@ import { culturalProducts } from '@/data/culturalProducts'
 import { pushArticles } from '@/data/pushArticles'
 import { siteConfig } from '@/data/site'
 
-const router = useRouter()
+const repoData = ref<any>(null)
+const localVisits = ref(0)
+const loadError = ref('')
+const buildDate = new Date().toISOString().split('T')[0]
 
-// 简单访问鉴权：URL hash 参数需匹配
+// 访问鉴权
 const accessKey = 'jmxm2026'
 const authed = ref(false)
 const keyInput = ref('')
@@ -22,7 +24,6 @@ function checkAccess() {
   const params = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '')
   if (params.get('key') === accessKey) {
     authed.value = true
-    // 清除 URL 中的 key
     const cleanHash = hash.split('?')[0]
     history.replaceState(null, '', cleanHash)
   }
@@ -34,14 +35,9 @@ function submitKey() {
   }
 }
 
-onMounted(checkAccess)
-
-const repoData = ref<any>(null)
-const localVisits = ref(0)
-const loadError = ref('')
-const buildDate = new Date().toISOString().split('T')[0]
-
 onMounted(async () => {
+  checkAccess()
+
   // 本地访问计数
   let count = parseInt(localStorage.getItem('jmxm_visits') || '0', 10)
   count++
