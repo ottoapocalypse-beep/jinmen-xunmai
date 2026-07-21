@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { activities } from '@/data/activities'
 import { mediaItems } from '@/data/media'
 import { archiveItems } from '@/data/archive'
@@ -8,6 +9,32 @@ import { mapPoints } from '@/data/map'
 import { culturalProducts } from '@/data/culturalProducts'
 import { pushArticles } from '@/data/pushArticles'
 import { siteConfig } from '@/data/site'
+
+const router = useRouter()
+
+// 简单访问鉴权：URL hash 参数需匹配
+const accessKey = 'jmxm2026'
+const authed = ref(false)
+const keyInput = ref('')
+
+function checkAccess() {
+  const hash = window.location.hash
+  const params = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '')
+  if (params.get('key') === accessKey) {
+    authed.value = true
+    // 清除 URL 中的 key
+    const cleanHash = hash.split('?')[0]
+    history.replaceState(null, '', cleanHash)
+  }
+}
+
+function submitKey() {
+  if (keyInput.value === accessKey) {
+    authed.value = true
+  }
+}
+
+onMounted(checkAccess)
 
 const repoData = ref<any>(null)
 const localVisits = ref(0)
@@ -47,6 +74,24 @@ const contentStats = [
 
 <template>
   <div class="admin-page">
+    <!-- 访问鉴权 -->
+    <div v-if="!authed" class="auth-gate">
+      <div class="auth-box">
+        <h1 class="auth-title">⚙️ 管理面板</h1>
+        <p class="auth-desc">请输入访问密钥</p>
+        <input
+          v-model="keyInput"
+          type="password"
+          class="auth-input"
+          placeholder="输入密钥"
+          @keyup.enter="submitKey"
+        />
+        <button class="auth-btn" @click="submitKey">确认</button>
+      </div>
+    </div>
+
+    <!-- 管理内容 -->
+    <template v-else>
     <div class="page-header">
       <h1>⚙️ 站点管理</h1>
       <div class="page-title-en">Admin Panel</div>
@@ -132,11 +177,74 @@ const contentStats = [
         </p>
       </div>
     </section>
+  </template>
   </div>
 </template>
 
 <style scoped>
 .admin-page { max-width: 800px; margin: 0 auto; }
+
+/* ===== 鉴权门 ===== */
+.auth-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.auth-box {
+  text-align: center;
+  padding: var(--space-2xl);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  max-width: 360px;
+  width: 100%;
+}
+
+.auth-title {
+  font-size: 1.3rem;
+  color: var(--color-primary-dark);
+  margin-bottom: var(--space-sm);
+}
+
+.auth-desc {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-lg);
+}
+
+.auth-input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  text-align: center;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.auth-input:focus { border-color: var(--color-gold); }
+
+.auth-btn {
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-xl);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.auth-btn:hover { background: var(--color-primary-light); }
 
 .section { margin-bottom: var(--space-2xl); }
 

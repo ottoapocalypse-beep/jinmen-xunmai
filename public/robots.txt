@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin
+Disallow: /*/admin
+
+Sitemap: https://ottoapocalypse-beep.github.io/jinmen-xunmai/sitemap.xml
