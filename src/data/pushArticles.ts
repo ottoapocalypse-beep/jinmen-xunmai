@@ -20,7 +20,7 @@ export const pushArticles: PushArticle[] = [
     date: '2026-07-13',
     summary: '首发推送！津门寻脉小队正式亮相。我们是北京科技大学满井溯源实践团津门寻脉小队，奔赴天津大学溯源校史根脉。从满井出发，把根脉传下去。',
     link: 'https://mp.weixin.qq.com/s/HzjxSXjgTGitKw4I5pmZrA',
-    chunks: 40,
+    chunks: 30,
     tags: ['集结', '首发'],
   },
   {
@@ -29,7 +29,7 @@ export const pushArticles: PushArticle[] = [
     date: '2026-07-20',
     summary: '1952年院系调整中，天津大学（原北洋大学）冶金、采矿等学科整建制调入北京钢铁工业学院。这段"钢铁奇缘"背后，藏着两所名校共同为国家工业建设"淬火成钢"的浪漫交接。',
     link: 'https://mp.weixin.qq.com/s/L9I_IYDDdpl-J74BCRmu1w',
-    chunks: 18,
+    chunks: 14,
     tags: ['推送', '校史'],
   },
   {
@@ -38,7 +38,7 @@ export const pushArticles: PushArticle[] = [
     date: '2026-07-21',
     summary: '用一条时间轴讲清北科大与生俱来的"天津基因"：1895年北洋西学学堂创办矿冶学科 → 1952年天大矿冶系牵头六校合并建校 → 1960年更名北京钢铁学院 → 1988年定名北京科技大学。',
     link: 'https://mp.weixin.qq.com/s/-zyyrm_WiNHi3UmyLIWKog',
-    chunks: 14,
+    chunks: 11,
     tags: ['推送', '校史', '时间轴'],
   },
 ]

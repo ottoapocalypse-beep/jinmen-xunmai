@@ -39,12 +39,14 @@ function chunkUrl(index: number): string {
 
       <!-- 正文：分块加载 -->
       <div class="detail-body">
-        <figure v-for="i in article.chunks" :key="i" class="detail-chunk">
+        <figure v-for="(i, idx) in article.chunks" :key="i" class="detail-chunk">
           <img
             :src="chunkUrl(i)"
             :alt="`${article.title} - 第${i}部分`"
             loading="lazy"
-            width="1440"
+            decoding="async"
+            :fetchpriority="idx < 3 ? 'high' : 'low'"
+            width="1080"
             height="800"
             class="chunk-img"
           />
@@ -107,6 +109,8 @@ function chunkUrl(index: number): string {
   padding: 0;
   display: block;
   line-height: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 800px;
 }
 
 .chunk-img {
