@@ -8,8 +8,8 @@ export interface PushArticle {
   summary: string
   /** 公众号文章链接 */
   link: string
-  /** 文章截图（本地图片路径） */
-  image: string
+  /** 分块图片数量 */
+  chunks: number
   tags: string[]
 }
 
@@ -20,7 +20,7 @@ export const pushArticles: PushArticle[] = [
     date: '2026-07-13',
     summary: '首发推送！津门寻脉小队正式亮相。我们是北京科技大学满井溯源实践团津门寻脉小队，奔赴天津大学溯源校史根脉。从满井出发，把根脉传下去。',
     link: 'https://mp.weixin.qq.com/s/HzjxSXjgTGitKw4I5pmZrA',
-    image: '/jinmen-xunmai/push-1.png',
+    chunks: 18,
     tags: ['集结', '首发'],
   },
   {
@@ -29,7 +29,7 @@ export const pushArticles: PushArticle[] = [
     date: '2026-07-20',
     summary: '1952年院系调整中，天津大学（原北洋大学）冶金、采矿等学科整建制调入北京钢铁工业学院。这段"钢铁奇缘"背后，藏着两所名校共同为国家工业建设"淬火成钢"的浪漫交接。',
     link: 'https://mp.weixin.qq.com/s/L9I_IYDDdpl-J74BCRmu1w',
-    image: '/jinmen-xunmai/push-2.png',
+    chunks: 40,
     tags: ['推送', '校史'],
   },
 ]
