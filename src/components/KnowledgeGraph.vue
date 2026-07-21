@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { nodes, edges, nodeColors } from '@/data/knowledgeGraph'
+import { nodes as initialNodes, edges, nodeColors } from '@/data/knowledgeGraph'
 
 const router = useRouter()
 const hoveredNode = ref<string | null>(null)
-
-/** 从百分比坐标转为实际像素（基于容器尺寸） */
+const dragging = ref<string | null>(null)
 const containerRef = ref<HTMLElement | null>(null)
 const dims = ref({ w: 800, h: 600 })
+
+/** 节点运行时坐标（允许拖拽修改） */
+const nodePositions = reactive<Record<string, { x: number; y: number }>>({})
+
+// 初始化节点位置
+initialNodes.forEach(n => { nodePositions[n.id] = { x: n.x, y: n.y } })
 
 function updateDims() {
   if (containerRef.value) {
@@ -19,7 +24,6 @@ function updateDims() {
   }
 }
 
-/** 将百分比坐标转为像素 */
 function px(node: { x: number; y: number }) {
   return {
     x: (node.x / 100) * dims.value.w,
@@ -27,10 +31,9 @@ function px(node: { x: number; y: number }) {
   }
 }
 
-/** 计算连线路径（贝塞尔曲线） */
 function edgePath(edge: { source: string; target: string }): string {
-  const s = nodes.find(n => n.id === edge.source)
-  const t = nodes.find(n => n.id === edge.target)
+  const s = nodePositions[edge.source]
+  const t = nodePositions[edge.target]
   if (!s || !t) return ''
   const p1 = px(s)
   const p2 = px(t)
@@ -43,10 +46,9 @@ function edgePath(edge: { source: string; target: string }): string {
   return `M${p1.x},${p1.y} C${cx1},${cy1} ${cx2},${cy2} ${p2.x},${p2.y}`
 }
 
-/** 计算连线标签位置（中点偏上） */
 function edgeLabelPos(edge: { source: string; target: string }) {
-  const s = nodes.find(n => n.id === edge.source)
-  const t = nodes.find(n => n.id === edge.target)
+  const s = nodePositions[edge.source]
+  const t = nodePositions[edge.target]
   if (!s || !t) return { x: 0, y: 0 }
   return {
     x: (px(s).x + px(t).x) / 2,
@@ -62,14 +64,59 @@ function isConnected(nodeId: string): boolean {
   )
 }
 
-function handleNodeClick(node: typeof nodes[0]) {
-  if (node.link) {
-    router.push(node.link)
-  } else if (node.search) {
-    router.push({ path: '/archive', query: { search: node.search } })
-  }
+function handleNodeClick(nodeId: string) {
+  if (dragging.value) return
+  const node = initialNodes.find(n => n.id === nodeId)
+  if (!node) return
+  if (node.link) router.push(node.link)
+  else if (node.search) router.push({ path: '/archive', query: { search: node.search } })
 }
 
+/* ===== 拖拽 ===== */
+let dragStartX = 0, dragStartY = 0
+let nodeStartX = 0, nodeStartY = 0
+
+function onPointerDown(e: PointerEvent, nodeId: string) {
+  dragging.value = nodeId
+  const pos = nodePositions[nodeId]
+  if (!pos) return
+  const p = px(pos)
+  dragStartX = e.clientX
+  dragStartY = e.clientY
+  nodeStartX = p.x
+  nodeStartY = p.y
+  const el = containerRef.value
+  if (el) el.setPointerCapture(e.pointerId)
+}
+
+function onPointerMove(e: PointerEvent) {
+  if (!dragging.value) return
+  const nodeId = dragging.value
+  const pos = nodePositions[nodeId]
+  if (!pos) return
+  const dx = e.clientX - dragStartX
+  const dy = e.clientY - dragStartY
+  let newX = ((nodeStartX + dx) / dims.value.w) * 100
+  let newY = ((nodeStartY + dy) / dims.value.h) * 100
+  // 限制边界
+  newX = Math.max(3, Math.min(97, newX))
+  newY = Math.max(3, Math.min(97, newY))
+  pos.x = newX
+  pos.y = newY
+}
+
+function onPointerUp() {
+  dragging.value = null
+}
+
+onMounted(() => {
+  updateDims()
+  window.addEventListener('resize', updateDims)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateDims)
+})
 </script>
 
 <template>
@@ -77,11 +124,10 @@ function handleNodeClick(node: typeof nodes[0]) {
     <h2 class="graph-title">校史知识图谱</h2>
     <p class="graph-subtitle">探索人物、机构与事件之间的关联</p>
 
-    <div ref="containerRef" class="graph-container">
+    <div ref="containerRef" class="graph-container" @pointermove="onPointerMove" @pointerup="onPointerUp" @pointercancel="onPointerUp">
       <svg
         :viewBox="`0 0 ${dims.w} ${dims.h}`"
         class="graph-svg"
-        @mouseenter="updateDims"
       >
         <!-- 滤镜：节点光晕 -->
         <defs>
@@ -121,50 +167,57 @@ function handleNodeClick(node: typeof nodes[0]) {
           </template>
         </g>
 
-        <!-- 连线 -->
+        <!-- 节点 -->
         <g class="nodes">
-          <template v-for="node in nodes" :key="node.id">
-            <!-- 连接高亮光晕 -->
+          <template v-for="node in initialNodes" :key="node.id">
             <circle
               v-if="hoveredNode === node.id"
-              :cx="px(node).x"
-              :cy="px(node).y"
+              :cx="px(nodePositions[node.id]).x"
+              :cy="px(nodePositions[node.id]).y"
               :r="28"
               :fill="nodeColors[node.type]"
               opacity="0.15"
               filter="url(#glow-heavy)"
               class="node-glow-ring"
             />
+            <!-- 拖拽热区（透明大圆，方便抓取） -->
+            <circle
+              :cx="px(nodePositions[node.id]).x"
+              :cy="px(nodePositions[node.id]).y"
+              r="28"
+              fill="transparent"
+              class="node-drag-area"
+              :style="{ cursor: dragging === node.id ? 'grabbing' : 'grab' }"
+              @pointerdown="onPointerDown($event, node.id)"
+              @pointerenter="hoveredNode = node.id"
+              @pointerleave="hoveredNode = null"
+            />
             <!-- 节点背景圆 -->
             <circle
-              :cx="px(node).x"
-              :cy="px(node).y"
+              :cx="px(nodePositions[node.id]).x"
+              :cy="px(nodePositions[node.id]).y"
               :r="hoveredNode === node.id ? 24 : 20"
               :fill="nodeColors[node.type]"
               :opacity="hoveredNode && !isConnected(node.id) ? 0.2 : 0.9"
               :filter="hoveredNode === node.id ? 'url(#glow)' : undefined"
               class="node-circle"
-              @mouseenter="hoveredNode = node.id"
-              @mouseleave="hoveredNode = null"
-              @click="handleNodeClick(node)"
+              :style="{ pointerEvents: 'none' }"
+              @click="handleNodeClick(node.id)"
             />
             <!-- 节点文字 -->
             <text
-              :x="px(node).x"
-              :y="px(node).y + 1"
+              :x="px(nodePositions[node.id]).x"
+              :y="px(nodePositions[node.id]).y + 1"
               text-anchor="middle"
               dominant-baseline="middle"
               class="node-label"
               :class="{ dimmed: hoveredNode && !isConnected(node.id) }"
-              @mouseenter="hoveredNode = node.id"
-              @mouseleave="hoveredNode = null"
-              @click="handleNodeClick(node)"
+              :style="{ pointerEvents: 'none' }"
             >
-              <!-- 处理换行（如 "北京钢铁\n工业学院"） -->
               <tspan
                 v-for="(line, li) in node.label.split('\\n')"
                 :key="li"
-                :x="px(node).x"
+                :x="px(nodePositions[node.id]).x"
                 :dy="li === 0 ? 0 : 12"
               >{{ line }}</tspan>
             </text>
@@ -180,7 +233,7 @@ function handleNodeClick(node: typeof nodes[0]) {
         <span class="hint-dot" style="background: #8B5CF6" /> 地点
         <span class="hint-dot" style="background: #6B7280" /> 概念
         <span class="hint-sep">|</span>
-        悬停查看关联 · 点击跳转
+        拖拽节点 · 悬停查看关联 · 点击跳转
       </div>
     </div>
   </section>
@@ -221,6 +274,12 @@ function handleNodeClick(node: typeof nodes[0]) {
   width: 100%;
   height: 100%;
   cursor: default;
+  touch-action: none;
+}
+
+/* ===== 拖拽热区 ===== */
+.node-drag-area {
+  transition: none;
 }
 
 /* ===== 连线 ===== */

@@ -46,4 +46,5 @@ export const navItems: NavItem[] = [
   { path: '/cultural-products', label: '文创展示', labelEn: 'Cultural', icon: 'cultural' },
   { path: '/panorama', label: '720°全景', labelEn: 'Panorama', icon: 'panorama' },
   { path: '/contact', label: '联系我们', labelEn: 'Contact', icon: 'contact' },
+  { path: '/push-articles', label: '推送文集', labelEn: 'Articles', icon: 'promotion' },
 ]
