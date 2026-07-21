@@ -97,6 +97,12 @@ const router = createRouter({
       component: () => import('@/views/PushArticleDetail.vue'),
       meta: { title: '文章详情', titleEn: 'Article' },
     },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('@/views/AdminStats.vue'),
+      meta: { title: '站点管理', titleEn: 'Admin' },
+    },
   ],
 })
 

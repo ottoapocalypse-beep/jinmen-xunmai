@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { siteConfig } from '@/data/site'
-import { useVisitCounter } from '@/composables/useVisitCounter'
 
 const socialLinks = [
   { name: '微信公众号', link: siteConfig.socialLinks.wechat },
@@ -9,15 +8,13 @@ const socialLinks = [
   { name: '快手', link: siteConfig.socialLinks.kuaishou },
   { name: '小红书', link: siteConfig.socialLinks.xiaohongshu },
 ]
-
-const { visitCount, adminVisible, secretTap } = useVisitCounter()
 </script>
 
 <template>
   <footer class="app-footer">
     <div class="footer-inner">
       <div class="footer-info">
-        <span class="footer-name" @click="secretTap" :title="adminVisible ? '再次点击5次隐藏统计' : undefined">{{ siteConfig.teamFull }}</span>
+        <span class="footer-name">{{ siteConfig.teamFull }}</span>
         <span class="footer-sep">·</span>
         <span class="footer-year">© {{ siteConfig.year }}</span>
       </div>
@@ -32,12 +29,6 @@ const { visitCount, adminVisible, secretTap } = useVisitCounter()
           class="social-chip"
         >{{ s.name }}</a>
       </div>
-    </div>
-
-    <!-- 管理者统计（默认隐藏，点击队名5次显示） -->
-    <div v-if="adminVisible" class="admin-stats">
-      <span class="stat-label">📊 本机访问次数：</span>
-      <span class="stat-value">{{ visitCount }}</span>
     </div>
   </footer>
 </template>
@@ -104,20 +95,6 @@ const { visitCount, adminVisible, secretTap } = useVisitCounter()
   background: var(--color-gold);
   color: var(--color-text-on-gold);
 }
-
-/* ===== 管理者统计（隐藏，点击队名5次显示） ===== */
-.admin-stats {
-  max-width: var(--content-max-width);
-  margin: var(--space-md) auto 0;
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--color-border-light);
-  text-align: center;
-  font-family: var(--font-sans);
-  font-size: 0.7rem;
-}
-
-.stat-label { color: var(--color-text-light); }
-.stat-value { color: var(--color-gold-dark); font-weight: 600; }
 
 @media (max-width: 768px) {
   .footer-inner {
