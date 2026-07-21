@@ -88,4 +88,13 @@ export const activities: Activity[] = [
     tags: ['采访', '预约'],
     active: true,
   },
+  {
+    id: 'act-11',
+    title: '津门寻脉｜天大与北科大的"钢铁奇缘"',
+    date: '2026-07-20',
+    summary: '公众号第二篇推送发布！讲述1952年院系调整中天津大学矿冶系北上组建北京钢铁工业学院的"硬核"历史。文案：李雨桐，审核：孙凯迪。',
+    link: 'https://mp.weixin.qq.com/s/L9I_IYDDdpl-J74BCRmu1w',
+    tags: ['推送', '校史'],
+    active: true,
+  },
 ]

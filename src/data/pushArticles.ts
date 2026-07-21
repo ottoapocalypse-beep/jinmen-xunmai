@@ -8,8 +8,8 @@ export interface PushArticle {
   summary: string
   /** 公众号文章链接 */
   link: string
-  /** 封面图（可从文章页面提取） */
-  coverUrl?: string
+  /** 文章截图（本地图片路径） */
+  image: string
   tags: string[]
 }
 
@@ -20,14 +20,16 @@ export const pushArticles: PushArticle[] = [
     date: '2026-07-13',
     summary: '首发推送！津门寻脉小队正式亮相。我们是北京科技大学满井溯源实践团津门寻脉小队，奔赴天津大学溯源校史根脉。从满井出发，把根脉传下去。',
     link: 'https://mp.weixin.qq.com/s/HzjxSXjgTGitKw4I5pmZrA',
+    image: '/jinmen-xunmai/push-1.png',
     tags: ['集结', '首发'],
   },
   {
     id: 'push-2',
-    title: '津门寻脉 | 实践进行时',
+    title: '津门寻脉｜天大与北科大的"钢铁奇缘"',
     date: '2026-07-20',
-    summary: '实践动态持续更新中，敬请期待后续推送。',
-    link: '#',
-    tags: ['动态'],
+    summary: '1952年院系调整中，天津大学（原北洋大学）冶金、采矿等学科整建制调入北京钢铁工业学院。这段"钢铁奇缘"背后，藏着两所名校共同为国家工业建设"淬火成钢"的浪漫交接。',
+    link: 'https://mp.weixin.qq.com/s/L9I_IYDDdpl-J74BCRmu1w',
+    image: '/jinmen-xunmai/push-2.png',
+    tags: ['推送', '校史'],
   },
 ]
