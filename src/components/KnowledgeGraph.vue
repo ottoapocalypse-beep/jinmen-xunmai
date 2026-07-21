@@ -1,259 +1,395 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { nodes as rawNodes, edges, nodeColors } from '@/data/knowledgeGraph'
+import * as d3 from 'd3'
+import { nodes as nodeData, edges as edgeData, nodeColors } from '@/data/knowledgeGraph'
 
 const router = useRouter()
-const hovered = ref<string | null>(null)
-const dragging = ref<string | null>(null)
 const containerRef = ref<HTMLElement | null>(null)
-const dims = ref({ w: 800, h: 500 })
-const settled = ref(false)
+const hoveredId = ref<string | null>(null)
+const dims = ref({ w: 800, h: 520 })
 
-/* ---- 物理引擎：节点位置 & 速度 ---- */
-const pos = reactive<Record<string, { x: number; y: number }>>({})
-const vel: Record<string, { x: number; y: number }> = {}
+let simulation: d3.Simulation<d3.SimulationNodeDatum, undefined> | null = null
+let svgEl: SVGElement | null = null
+let particleInterval: number | null = null
 
-rawNodes.forEach(n => {
-  // 使用原始百分比坐标（手动设计的合理布局），不做随机
-  pos[n.id] = { x: n.x / 100, y: n.y / 100 }
-  vel[n.id] = { x: 0, y: 0 }
-})
-
-function px(n: { x: number; y: number }) {
-  return { x: n.x * dims.value.w, y: n.y * dims.value.h }
-}
-
-/* ---- 力模拟 ---- */
-const REP = 200    // 排斥力（减弱）
-const ATT = 0.001  // 弹簧系数（减弱）
-const REST = 0.14  // 弹簧自然长度
-const CTR = 0.002  // 向心力
-const DAMP = 0.90  // 阻尼
-
-let animId = 0
-let frameCount = 0
-
-function tick() {
-  const n = rawNodes.length
-  if (n === 0) { settled.value = true; return }
-  let ke = 0
-  frameCount++ // 总动能
-
-  for (let a = 0; a < n; a++) {
-    const idA = rawNodes[a].id
-    const pA = pos[idA]
-    let fx = 0, fy = 0
-
-    // ① 节点间排斥
-    for (let b = 0; b < n; b++) {
-      if (a === b) continue
-      const pB = pos[rawNodes[b].id]
-      const dx = pA.x - pB.x
-      const dy = pA.y - pB.y
-      const d = Math.max(Math.sqrt(dx * dx + dy * dy), 0.01)
-      const f = REP / (d * d * n)
-      fx += (dx / d) * f
-      fy += (dy / d) * f
-    }
-
-    // ② 边弹簧力
-    for (const edge of edges) {
-      let other = edge.source === idA ? edge.target : edge.target === idA ? edge.source : null
-      if (!other) continue
-      const pB = pos[other]
-      const dx = pB.x - pA.x
-      const dy = pB.y - pA.y
-      const d = Math.max(Math.sqrt(dx * dx + dy * dy), 0.01)
-      const f = ATT * (d - REST)
-      fx += (dx / d) * f
-      fy += (dy / d) * f
-    }
-
-    // ③ 向心力
-    fx += (0.5 - pA.x) * CTR
-    fy += (0.5 - pA.y) * CTR
-
-    // 更新速度 & 位置
-    const v = vel[idA]
-    if (dragging.value !== idA) {
-      v.x = (v.x + fx) * DAMP
-      v.y = (v.y + fy) * DAMP
-    } else {
-      v.x = 0; v.y = 0
-    }
-    ke += v.x * v.x + v.y * v.y
-
-    if (dragging.value !== idA) {
-      pA.x += v.x
-      pA.y += v.y
-    }
-    pA.x = Math.max(0.03, Math.min(0.97, pA.x))
-    pA.y = Math.max(0.03, Math.min(0.97, pA.y))
-  }
-
-  settled.value = ke < 0.02 * n || frameCount > 180  // 最多跑3秒(60fps×3)
-  if (!settled.value || dragging.value) {
-    animId = requestAnimationFrame(tick)
+function updateDims() {
+  if (containerRef.value) {
+    dims.value = { w: containerRef.value.clientWidth, h: containerRef.value.clientHeight }
   }
 }
-
-function start() {
-  settled.value = false
-  frameCount = 0
-  cancelAnimationFrame(animId)
-  animId = requestAnimationFrame(tick)
-}
-
-/* ---- 连线 ---- */
-function edgePath(e: { source: string; target: string }) {
-  const s = pos[e.source], t = pos[e.target]
-  if (!s || !t) return ''
-  const p1 = px(s), p2 = px(t)
-  const dx = p2.x - p1.x, dy = p2.y - p1.y
-  const cx1 = p1.x + dx * 0.4, cy1 = p1.y + dy * 0.1
-  const cx2 = p1.x + dx * 0.6, cy2 = p1.y + dy * 0.9
-  return `M${p1.x},${p1.y} C${cx1},${cy1} ${cx2},${cy2} ${p2.x},${p2.y}`
-}
-
-function edgeMid(e: { source: string; target: string }) {
-  const s = pos[e.source], t = pos[e.target]
-  if (!s || !t) return { x: 0, y: 0 }
-  const p1 = px(s), p2 = px(t)
-  return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 - 8 }
-}
-
-function isConnected(id: string) {
-  if (!hovered.value || hovered.value === id) return true
-  return edges.some(e => (e.source === hovered.value && e.target === id) || (e.target === hovered.value && e.source === id))
-}
-
-function onClick(id: string) {
-  if (dragging.value) return
-  const n = rawNodes.find(x => x.id === id)
-  if (!n) return
-  if (n.link) router.push(n.link)
-  else if (n.search) router.push({ path: '/archive', query: { search: n.search } })
-}
-
-/* ---- 拖拽 ---- */
-let dsx = 0, dsy = 0
-function onPD(e: PointerEvent, id: string) {
-  dragging.value = id; settled.value = false
-  dsx = e.clientX; dsy = e.clientY
-  containerRef.value?.setPointerCapture(e.pointerId)
-  start()
-}
-function onPM(e: PointerEvent) {
-  if (!dragging.value) return
-  const p = pos[dragging.value]; if (!p) return
-  p.x += (e.clientX - dsx) / dims.value.w
-  p.y += (e.clientY - dsy) / dims.value.h
-  dsx = e.clientX; dsy = e.clientY
-  vel[dragging.value] = { x: 0, y: 0 }
-}
-function onPU() { dragging.value = null }
 
 onMounted(() => {
-  function resize() {
-    if (containerRef.value) dims.value = { w: containerRef.value.clientWidth, h: containerRef.value.clientHeight }
-  }
-  resize()
-  window.addEventListener('resize', resize)
-  setTimeout(start, 200)
+  updateDims()
+  window.addEventListener('resize', updateDims)
+  initGraph()
 })
 
 onUnmounted(() => {
-  cancelAnimationFrame(animId)
-  window.removeEventListener('resize', () => {})
+  window.removeEventListener('resize', updateDims)
+  if (simulation) simulation.stop()
+  if (particleInterval) cancelAnimationFrame(particleInterval)
 })
+
+watch(dims, () => {
+  if (simulation) {
+    simulation.force('center', d3.forceCenter(dims.value.w / 2, dims.value.h / 2))
+    simulation.alpha(0.3).restart()
+  }
+})
+
+function initGraph() {
+  if (!containerRef.value) return
+
+  const w = dims.value.w
+  const h = dims.value.h
+
+  // 准备 D3 数据（深拷贝）
+  const nodes = nodeData.map(n => ({ ...n, x: (n.x / 100) * w, y: (n.y / 100) * h }))
+  const links = edgeData.map(e => ({
+    source: e.source,
+    target: e.target,
+    label: e.label,
+  }))
+
+  // 创建 SVG
+  const svg = d3.select(containerRef.value)
+    .append('svg')
+    .attr('width', w)
+    .attr('height', h)
+    .attr('class', 'graph-svg')
+    .style('touch-action', 'none')
+
+  svgEl = svg.node()
+
+  // 定义滤镜
+  const defs = svg.append('defs')
+  defs.append('filter').attr('id', 'glow-d3')
+    .append('feDropShadow').attr('dx', 0).attr('dy', 0).attr('stdDeviation', 4).attr('flood-opacity', 0.5)
+
+  // 箭头标记
+  defs.append('marker')
+    .attr('id', 'arrow-d3')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 28)
+    .attr('refY', 0)
+    .attr('markerWidth', 6)
+    .attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M0 -5L10 0L0 5')
+    .attr('fill', 'var(--color-border)')
+
+  // ---- 连线 ----
+  const linkGroup = svg.append('g').attr('class', 'links')
+  const linkPaths = linkGroup.selectAll('path')
+    .data(links)
+    .join('path')
+    .attr('class', 'link-line')
+    .attr('marker-end', 'url(#arrow-d3)')
+
+  // 连线标签
+  const linkLabelGroup = svg.append('g').attr('class', 'link-labels')
+  const linkLabels = linkLabelGroup.selectAll('text')
+    .data(links.filter(l => l.label))
+    .join('text')
+    .attr('class', 'link-label')
+    .attr('text-anchor', 'middle')
+    .attr('dy', -6)
+    .text(d => d.label!)
+
+  // ---- 粒子连线 ----
+  const particleGroup = svg.append('g').attr('class', 'particles')
+
+  // 为每条边创建粒子
+  const particles: { element: d3.Selection<SVGCircleElement, unknown, null, undefined>; progress: number; speed: number }[] = []
+  links.forEach((link, i) => {
+    const p = particleGroup.append('circle')
+      .attr('r', 2.5)
+      .attr('fill', '#c9a84c')
+      .attr('opacity', 0.7)
+    particles.push({
+      element: p,
+      progress: Math.random(),
+      speed: 0.002 + Math.random() * 0.003,
+    })
+  })
+
+  // 粒子动画
+  function animateParticles() {
+    particles.forEach((p, i) => {
+      p.progress += p.speed
+      if (p.progress > 1) p.progress = 0
+      const link = links[i]
+      const s = typeof link.source === 'object' ? link.source : nodes.find(n => n.id === link.source)
+      const t = typeof link.target === 'object' ? link.target : nodes.find(n => n.id === link.target)
+      if (s && t && 'x' in s && 'y' in t) {
+        const x = (s as any).x + ((t as any).x - (s as any).x) * p.progress
+        const y = (s as any).y + ((t as any).y - (s as any).y) * p.progress
+        p.element.attr('cx', x).attr('cy', y)
+      }
+    })
+    particleInterval = requestAnimationFrame(animateParticles)
+  }
+  animateParticles()
+
+  // ---- 节点 ----
+  const nodeGroup = svg.append('g').attr('class', 'nodes')
+
+  const nodeCircles = nodeGroup.selectAll('circle')
+    .data(nodes)
+    .join('circle')
+    .attr('r', 20)
+    .attr('fill', d => nodeColors[d.type])
+    .attr('opacity', 0.9)
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 2)
+    .style('cursor', 'pointer')
+
+  // 节点光晕（hover 时显示）
+  const nodeGlow = nodeGroup.selectAll('circle.glow')
+    .data(nodes)
+    .join('circle')
+    .attr('class', 'glow')
+    .attr('r', 28)
+    .attr('fill', d => nodeColors[d.type])
+    .attr('opacity', 0)
+    .attr('pointer-events', 'none')
+
+  // 节点标签
+  const nodeLabels = nodeGroup.selectAll('text')
+    .data(nodes)
+    .join('text')
+    .attr('class', 'node-label-d3')
+    .attr('text-anchor', 'middle')
+    .attr('dominant-baseline', 'middle')
+    .style('pointer-events', 'none')
+    .style('user-select', 'none')
+    .text(d => d.label)
+
+  // 处理换行标签
+  nodeLabels.each(function (d) {
+    const el = d3.select(this)
+    const lines = d.label.split('\\n')
+    if (lines.length > 1) {
+      el.text('')
+      lines.forEach((line, i) => {
+        el.append('tspan')
+          .attr('x', 0)
+          .attr('dy', i === 0 ? 0 : 12)
+          .text(line)
+      })
+    }
+  })
+
+  // ---- 交互 ----
+  nodeCircles
+    .on('mouseenter', function (_, d) {
+      hoveredId.value = d.id
+      nodeCircles.attr('opacity', n => !hoveredId.value || hoveredId.value === n.id || isConnected(n.id, hoveredId.value!) ? 0.9 : 0.15)
+      nodeLabels.attr('opacity', n => !hoveredId.value || hoveredId.value === n.id || isConnected(n.id, hoveredId.value!) ? 1 : 0.15)
+      nodeGlow.attr('opacity', n => n.id === d.id ? 0.15 : 0)
+      linkPaths.attr('opacity', l => !hoveredId.value || l.source === hoveredId.value || l.target === hoveredId.value || 
+        (typeof l.source === 'object' && (l.source as any).id === hoveredId.value) ||
+        (typeof l.target === 'object' && (l.target as any).id === hoveredId.value) ? 1 : 0.08)
+        .attr('stroke', l => hoveredId.value && (l.source === hoveredId.value || l.target === hoveredId.value || 
+          (typeof l.source === 'object' && (l.source as any).id === hoveredId.value) ||
+          (typeof l.target === 'object' && (l.target as any).id === hoveredId.value)) ? nodeColors[nodes.find(n => n.id === hoveredId.value)?.type || 'concept'] : undefined)
+      linkLabels.attr('opacity', l => !hoveredId.value || 
+        l.source === hoveredId.value || l.target === hoveredId.value ||
+        (typeof l.source === 'object' && (l.source as any).id === hoveredId.value) ||
+        (typeof l.target === 'object' && (l.target as any).id === hoveredId.value) ? 1 : 0.08)
+    })
+    .on('mouseleave', () => {
+      hoveredId.value = null
+      nodeCircles.attr('opacity', 0.9)
+      nodeLabels.attr('opacity', 1)
+      nodeGlow.attr('opacity', 0)
+      linkPaths.attr('opacity', 1).attr('stroke', null)
+      linkLabels.attr('opacity', 1)
+    })
+    .on('click', (_, d) => {
+      if (d.link) router.push(d.link)
+      else if (d.search) router.push({ path: '/archive', query: { search: d.search } })
+    })
+
+  // ---- 力导向模拟 ----
+  simulation = d3.forceSimulation(nodes as any)
+    .force('link', d3.forceLink(links).id((d: any) => d.id).distance(80).strength(0.3))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(w / 2, h / 2))
+    .force('collide', d3.forceCollide(35))
+    .alphaDecay(0.05)
+    .on('tick', () => {
+      // 更新连线路径
+      linkPaths.attr('d', (d: any) => {
+        if (!d.source || !d.target) return ''
+        const s = d.source
+        const t = d.target
+        const dx = t.x - s.x
+        const dy = t.y - s.y
+        const cx1 = s.x + dx * 0.4
+        const cy1 = s.y + dy * 0.1
+        const cx2 = s.x + dx * 0.6
+        const cy2 = s.y + dy * 0.9
+        return `M${s.x},${s.y} C${cx1},${cy1} ${cx2},${cy2} ${t.x},${t.y}`
+      })
+
+      // 更新连线标签位置
+      linkLabels.attr('x', (d: any) => (d.source.x + d.target.x) / 2)
+        .attr('y', (d: any) => (d.source.y + d.target.y) / 2)
+
+      // 更新节点位置
+      nodeCircles.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y)
+      nodeGlow.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y)
+      nodeLabels.attr('x', (d: any) => d.x).attr('y', (d: any) => d.y)
+    })
+
+  // ---- 拖拽 ----
+  const drag = d3.drag<SVGCircleElement, any>()
+    .on('start', (event, d) => {
+      if (!event.active) simulation?.alphaTarget(0.3).restart()
+      d.fx = d.x
+      d.fy = d.y
+    })
+    .on('drag', (event, d) => {
+      d.fx = event.x
+      d.fy = event.y
+    })
+    .on('end', (event, d) => {
+      if (!event.active) simulation?.alphaTarget(0)
+      d.fx = null
+      d.fy = null
+    })
+
+  nodeCircles.call(drag as any)
+}
+
+function isConnected(nodeId: string, targetId: string): boolean {
+  return edgeData.some(e =>
+    (e.source === targetId && e.target === nodeId) ||
+    (e.target === targetId && e.source === nodeId)
+  )
+}
 </script>
 
 <template>
-  <section class="g-section">
-    <h2 class="g-title">校史知识图谱</h2>
-    <p class="g-subtitle">力导向布局 · 节点自动排列</p>
+  <section class="graph-section">
+    <h2 class="graph-title">校史知识图谱</h2>
+    <p class="graph-subtitle">力导向布局 · 拖拽节点 · 悬停查看关联 · 点击跳转</p>
 
-    <div ref="containerRef" class="g-container" @pointermove="onPM" @pointerup="onPU" @pointercancel="onPU">
-      <svg :viewBox="`0 0 ${dims.w} ${dims.h}`" class="g-svg">
-        <defs>
-          <filter id="gg">
-            <feGaussianBlur stdDeviation="3" result="b" />
-            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
-
-        <!-- 连线 -->
-        <g>
-          <path v-for="e in edges" :key="`e-${e.source}-${e.target}`"
-            :d="edgePath(e)"
-            :class="['g-edge', { dim: hovered && !isConnected(e.source) && !isConnected(e.target) }]"
-          />
-          <text v-for="e in edges.filter(x => x.label)" :key="`l-${e.source}-${e.target}`"
-            :x="edgeMid(e).x" :y="edgeMid(e).y"
-            text-anchor="middle" class="g-edge-label"
-          >{{ e.label }}</text>
-        </g>
-
-        <!-- 节点 -->
-        <g v-for="n in rawNodes" :key="n.id">
-          <circle v-if="hovered === n.id"
-            :cx="px(pos[n.id]).x" :cy="px(pos[n.id]).y" r="30"
-            :fill="nodeColors[n.type]" opacity="0.1" filter="url(#gg)"
-            class="g-glow"
-          />
-          <circle
-            :cx="px(pos[n.id]).x" :cy="px(pos[n.id]).y"
-            :r="hovered === n.id ? 22 : 18"
-            :fill="hovered && !isConnected(n.id) ? nodeColors[n.type] + '44' : nodeColors[n.type]"
-            :stroke="hovered === n.id ? '#fff' : 'transparent'"
-            :stroke-width="hovered === n.id ? 2.5 : 0"
-            class="g-dot"
-            :style="{ cursor: dragging === n.id ? 'grabbing' : 'pointer' }"
-            @pointerdown="onPD($event, n.id)"
-            @pointerenter="hovered = n.id"
-            @pointerleave="hovered = null"
-            @click="onClick(n.id)"
-          />
-          <text
-            :x="px(pos[n.id]).x" :y="px(pos[n.id]).y + 1"
-            text-anchor="middle" dominant-baseline="middle"
-            class="g-label"
-            :class="{ dim: hovered && !isConnected(n.id) }"
-            :style="{ pointerEvents: 'none' }"
-          >{{ n.label.replace('\\n', ' ') }}</text>
-        </g>
-      </svg>
-
-      <div class="g-hint">
-        <span v-for="(c, k) in nodeColors" :key="k" class="hint-chip">
-          <span class="hint-dot" :style="{ background: c }" />
-          {{ { team: '团队', institution: '机构', event: '事件', person: '人物', location: '地点', concept: '概念' }[k] || k }}
-        </span>
+    <div ref="containerRef" class="graph-container">
+      <div class="graph-hint">
+        <span class="hint-dot" style="background: #3B82F6" /> 机构
+        <span class="hint-dot" style="background: #F59E0B" /> 事件
+        <span class="hint-dot" style="background: #10B981" /> 人物
+        <span class="hint-dot" style="background: #8B5CF6" /> 地点
+        <span class="hint-dot" style="background: #6B7280" /> 概念
         <span class="hint-sep">|</span>
-        {{ settled ? '✓ 已稳定' : '◌ 排列中…' }}
-        拖拽 · 悬停 · 点击
+        <span class="hint-dot" style="background: #c9a84c" /> 粒子流动
       </div>
     </div>
   </section>
 </template>
 
 <style scoped>
-.g-section { max-width: 900px; margin: var(--space-2xl) auto; padding: 0 var(--space-lg); }
-.g-title { font-size: 1.3rem; color: var(--color-primary-dark); text-align: center; margin-bottom: var(--space-xs); }
-.g-subtitle { font-family: var(--font-sans); font-size: 0.85rem; color: var(--color-text-secondary); text-align: center; margin-bottom: var(--space-lg); }
-.g-container { position: relative; width: 100%; height: 500px; background: var(--color-bg-alt); border-radius: var(--radius-lg); overflow: hidden; touch-action: none; }
-.g-svg { width: 100%; height: 100%; }
-.g-edge { fill: none; stroke: var(--color-border); stroke-width: 1.5; transition: opacity .3s; }
-.g-edge.dim { opacity: 0.06; }
-.g-edge-label { font-family: var(--font-sans); font-size: 0.55rem; fill: var(--color-text-light); pointer-events: none; user-select: none; }
-.g-dot { transition: r .2s, fill .2s, stroke .1s; cursor: pointer; }
-.g-glow { pointer-events: none; animation: breathe 2s ease-in-out infinite; }
-@keyframes breathe { 0%,100% { opacity: 0.08; r: 30; } 50% { opacity: 0.16; r: 34; } }
-.g-label { font-family: var(--font-sans); font-size: 0.65rem; font-weight: 600; fill: #fff; pointer-events: none; user-select: none; transition: opacity .2s; }
-.g-label.dim { opacity: 0.2; }
-.g-hint { position: absolute; bottom: var(--space-sm); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: var(--space-sm); font-family: var(--font-sans); font-size: 0.6rem; color: var(--color-text-light); background: rgba(255,255,255,0.85); padding: 3px 14px; border-radius: 14px; white-space: nowrap; }
-.hint-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 2px; }
-.hint-chip { display: inline-flex; align-items: center; gap: 2px; }
+.graph-section {
+  max-width: 900px;
+  margin: var(--space-3xl) auto;
+  padding: 0 var(--space-lg);
+}
+
+.graph-title {
+  font-size: 1.3rem;
+  color: var(--color-primary-dark);
+  text-align: center;
+  margin-bottom: var(--space-xs);
+}
+
+.graph-subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.graph-container {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  background: var(--color-bg-alt);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.graph-container :deep(.graph-svg) {
+  width: 100%;
+  height: 100%;
+}
+
+.graph-container :deep(.link-line) {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 1.5;
+  transition: stroke var(--transition-fast), opacity var(--transition-fast);
+}
+
+.graph-container :deep(.link-label) {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  fill: var(--color-text-light);
+  pointer-events: none;
+  user-select: none;
+  transition: opacity var(--transition-fast);
+}
+
+.graph-container :deep(.node-label-d3) {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 600;
+  fill: #fff;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.graph-container :deep(.glow) {
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+}
+
+/* ===== 图例 ===== */
+.graph-hint {
+  position: absolute;
+  bottom: var(--space-md);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  color: var(--color-text-light);
+  background: rgba(255,255,255,0.85);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hint-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .hint-sep { color: var(--color-border); }
+
+@media (max-width: 640px) {
+  .graph-container { height: 400px; }
+  .graph-hint { font-size: 0.55rem; gap: 4px; padding: 2px 10px; }
+}
 </style>
