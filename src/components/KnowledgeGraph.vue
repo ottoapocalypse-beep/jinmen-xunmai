@@ -38,6 +38,13 @@ watch(dims, () => {
   }
 })
 
+function nodeRadius(d: { label: string }): number {
+  const lines = d.label.split('\\n')
+  const maxChars = Math.max(...lines.map(l => l.length))
+  // 每个字约 5.5px，加 padding
+  return Math.max(16, Math.min(34, maxChars * 5.5 + 8))
+}
+
 function initGraph() {
   if (!containerRef.value) return
 
@@ -71,14 +78,14 @@ function initGraph() {
   defs.append('marker')
     .attr('id', 'arrow-d3')
     .attr('viewBox', '0 -5 10 10')
-    .attr('refX', 28)
+    .attr('refX', 30)
     .attr('refY', 0)
     .attr('markerWidth', 6)
     .attr('markerHeight', 6)
     .attr('orient', 'auto')
     .append('path')
     .attr('d', 'M0 -5L10 0L0 5')
-    .attr('fill', 'var(--color-border)')
+    .attr('fill', 'var(--color-text-secondary)')
 
   // ---- 连线 ----
   const linkGroup = svg.append('g').attr('class', 'links')
@@ -139,7 +146,7 @@ function initGraph() {
   const nodeCircles = nodeGroup.selectAll('circle')
     .data(nodes)
     .join('circle')
-    .attr('r', 20)
+    .attr('r', d => nodeRadius(d))
     .attr('fill', d => nodeColors[d.type])
     .attr('opacity', 0.9)
     .attr('stroke', '#fff')
@@ -151,7 +158,7 @@ function initGraph() {
     .data(nodes)
     .join('circle')
     .attr('class', 'glow')
-    .attr('r', 28)
+    .attr('r', d => nodeRadius(d) + 6)
     .attr('fill', d => nodeColors[d.type])
     .attr('opacity', 0)
     .attr('pointer-events', 'none')
@@ -218,7 +225,7 @@ function initGraph() {
     .force('link', d3.forceLink(links).id((d: any) => d.id).distance(80).strength(0.3))
     .force('charge', d3.forceManyBody().strength(-200))
     .force('center', d3.forceCenter(w / 2, h / 2))
-    .force('collide', d3.forceCollide(35))
+    .force('collide', d3.forceCollide().radius((d: any) => nodeRadius(d) + 8))
     .alphaDecay(0.05)
     .on('tick', () => {
       // 更新连线路径
@@ -338,19 +345,31 @@ function isConnected(nodeId: string, targetId: string): boolean {
 .graph-container :deep(.link-label) {
   font-family: var(--font-sans);
   font-size: 0.6rem;
-  fill: var(--color-text-light);
+  font-weight: 600;
+  fill: var(--color-text);
   pointer-events: none;
   user-select: none;
   transition: opacity var(--transition-fast);
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .graph-container :deep(.node-label-d3) {
   font-family: var(--font-sans);
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 600;
   fill: #fff;
   cursor: pointer;
   transition: opacity var(--transition-fast);
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: rgba(0,0,0,0.15);
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .graph-container :deep(.glow) {
