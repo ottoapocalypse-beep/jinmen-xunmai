@@ -38,13 +38,6 @@ watch(dims, () => {
   }
 })
 
-function nodeRadius(d: { label: string }): number {
-  const lines = d.label.split('\\n')
-  const maxChars = Math.max(...lines.map(l => l.length))
-  // 每个字约 5.5px，加 padding
-  return Math.max(16, Math.min(34, maxChars * 5.5 + 8))
-}
-
 function initGraph() {
   if (!containerRef.value) return
 
@@ -78,14 +71,14 @@ function initGraph() {
   defs.append('marker')
     .attr('id', 'arrow-d3')
     .attr('viewBox', '0 -5 10 10')
-    .attr('refX', 30)
+    .attr('refX', 28)
     .attr('refY', 0)
     .attr('markerWidth', 6)
     .attr('markerHeight', 6)
     .attr('orient', 'auto')
     .append('path')
     .attr('d', 'M0 -5L10 0L0 5')
-    .attr('fill', 'var(--color-text-secondary)')
+    .attr('fill', 'var(--color-border)')
 
   // ---- 连线 ----
   const linkGroup = svg.append('g').attr('class', 'links')
@@ -95,7 +88,7 @@ function initGraph() {
     .attr('class', 'link-line')
     .attr('marker-end', 'url(#arrow-d3)')
 
-  // 连线标签
+  // 连���标签
   const linkLabelGroup = svg.append('g').attr('class', 'link-labels')
   const linkLabels = linkLabelGroup.selectAll('text')
     .data(links.filter(l => l.label))
@@ -103,6 +96,7 @@ function initGraph() {
     .attr('class', 'link-label')
     .attr('text-anchor', 'middle')
     .attr('dy', -6)
+    .attr('font-weight', '700')
     .text(d => d.label!)
 
   // ---- 粒子连线 ----
@@ -140,6 +134,14 @@ function initGraph() {
   }
   animateParticles()
 
+  /** 根据文字长度计算节点半径 */
+  function nodeRadius(d: typeof nodes[0]): number {
+    const lines = d.label.split('\\n')
+    const maxChars = Math.max(...lines.map(l => l.length))
+    // 每个字约 8px，加 padding
+    return Math.max(18, maxChars * 4.5 + 8)
+  }
+
   // ---- 节点 ----
   const nodeGroup = svg.append('g').attr('class', 'nodes')
 
@@ -154,16 +156,17 @@ function initGraph() {
     .style('cursor', 'pointer')
 
   // 节点光晕（hover 时显示）
+  const glowRadius = (d: typeof nodes[0]) => nodeRadius(d) + 6
   const nodeGlow = nodeGroup.selectAll('circle.glow')
     .data(nodes)
     .join('circle')
     .attr('class', 'glow')
-    .attr('r', d => nodeRadius(d) + 6)
+    .attr('r', d => glowRadius(d))
     .attr('fill', d => nodeColors[d.type])
     .attr('opacity', 0)
     .attr('pointer-events', 'none')
 
-  // 节点标签
+  // 节点标签（分两行）
   const nodeLabels = nodeGroup.selectAll('text')
     .data(nodes)
     .join('text')
@@ -225,7 +228,7 @@ function initGraph() {
     .force('link', d3.forceLink(links).id((d: any) => d.id).distance(80).strength(0.3))
     .force('charge', d3.forceManyBody().strength(-200))
     .force('center', d3.forceCenter(w / 2, h / 2))
-    .force('collide', d3.forceCollide().radius((d: any) => nodeRadius(d) + 8))
+    .force('collide', d3.forceCollide().radius(d => nodeRadius(d as any) + 5))
     .alphaDecay(0.05)
     .on('tick', () => {
       // 更新连线路径
@@ -250,6 +253,9 @@ function initGraph() {
       nodeCircles.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y)
       nodeGlow.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y)
       nodeLabels.attr('x', (d: any) => d.x).attr('y', (d: any) => d.y)
+      // 更新节点半径（文字动态变化）
+      nodeCircles.attr('r', (d: any) => nodeRadius(d))
+      nodeGlow.attr('r', (d: any) => nodeRadius(d) + 6)
     })
 
   // ---- 拖拽 ----
@@ -345,31 +351,20 @@ function isConnected(nodeId: string, targetId: string): boolean {
 .graph-container :deep(.link-label) {
   font-family: var(--font-sans);
   font-size: 0.6rem;
-  font-weight: 600;
+  font-weight: 700;
   fill: var(--color-text);
   pointer-events: none;
   user-select: none;
   transition: opacity var(--transition-fast);
-  paint-order: stroke;
-  stroke: #fff;
-  stroke-width: 2px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .graph-container :deep(.node-label-d3) {
   font-family: var(--font-sans);
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 600;
   fill: #fff;
   cursor: pointer;
   transition: opacity var(--transition-fast);
-  pointer-events: none;
-  paint-order: stroke;
-  stroke: rgba(0,0,0,0.15);
-  stroke-width: 2px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .graph-container :deep(.glow) {
