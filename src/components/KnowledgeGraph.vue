@@ -154,8 +154,8 @@ function initGraph() {
   const nodeCircles = nodeGroup.selectAll('circle')
     .data(nodes)
     .join('circle')
-    .attr('r', d => nodeRadius(d))
-    .attr('fill', d => nodeColors[d.type])
+    .attr('r', (d: any) => nodeRadius(d))
+    .attr('fill', (d: any) => nodeColors[d.type])
     .attr('opacity', 0.9)
     .attr('stroke', '#fff')
     .attr('stroke-width', 2)
@@ -166,8 +166,8 @@ function initGraph() {
     .data(nodes)
     .join('circle')
     .attr('class', 'glow')
-    .attr('r', d => nodeRadius(d) + 8)
-    .attr('fill', d => nodeColors[d.type])
+    .attr('r', (d: any) => nodeRadius(d) + 8)
+    .attr('fill', (d: any) => nodeColors[d.type])
     .attr('opacity', 0)
     .attr('pointer-events', 'none')
 
@@ -180,12 +180,12 @@ function initGraph() {
     .attr('dominant-baseline', 'middle')
     .style('pointer-events', 'none')
     .style('user-select', 'none')
-    .style('font-size', d => `${nodeFontSize(d)}rem`)
+    .style('font-size', (d: any) => `${nodeFontSize(d)}rem`)
     .style('font-weight', '600')
-    .text(d => d.label)
+    .text((d: any) => d.label)
 
   // 处理换行标签 + 文字描边使其在节点内清晰
-  nodeLabels.each(function (d) {
+  nodeLabels.each(function (d: any) {
     const el = d3.select(this)
     const lines = d.label.split('\\n')
     if (lines.length > 1) {

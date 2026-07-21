@@ -39,7 +39,7 @@ function chunkUrl(index: number): string {
 
       <!-- 正文：分块加载 -->
       <div class="detail-body">
-        <figure v-for="(i, idx) in article.chunks" :key="i" class="detail-chunk">
+        <figure v-for="(_, idx) in article.chunks" :key="idx" class="detail-chunk">
           <img
             :src="chunkUrl(i)"
             :alt="`${article.title} - 第${i}部分`"
