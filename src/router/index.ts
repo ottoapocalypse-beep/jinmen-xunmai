@@ -91,6 +91,12 @@ const router = createRouter({
       component: () => import('@/views/PushArticles.vue'),
       meta: { title: '推送文集', titleEn: 'Articles' },
     },
+    {
+      path: '/push-articles/:id',
+      name: 'pushArticleDetail',
+      component: () => import('@/views/PushArticleDetail.vue'),
+      meta: { title: '文章详情', titleEn: 'Article' },
+    },
   ],
 })
 
