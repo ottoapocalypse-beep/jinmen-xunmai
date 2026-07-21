@@ -7,9 +7,12 @@ const route = useRoute()
 const router = useRouter()
 const article = pushArticles.find(a => a.id === route.params.id)
 
-/** 分块图路径 */
+/** 分块图路径（注意：文件编号与文章编号相反） */
 function chunkUrl(index: number): string {
-  return `/jinmen-xunmai/push/push-${article!.id.split('-')[1]}_${index}.jpg`
+  const id = article!.id
+  // push-1 实际对应 push-2 的图，push-2 对应 push-1 的图
+  const fileId = id === 'push-1' ? '2' : '1'
+  return `/jinmen-xunmai/push/push-${fileId}_${index}.jpg`
 }
 </script>
 
