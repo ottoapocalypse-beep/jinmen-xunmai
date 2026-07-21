@@ -41,8 +41,8 @@ function chunkUrl(index: number): string {
       <div class="detail-body">
         <figure v-for="(_, idx) in article.chunks" :key="idx" class="detail-chunk">
           <img
-            :src="chunkUrl(i)"
-            :alt="`${article.title} - 第${i}部分`"
+            :src="chunkUrl(idx)"
+            :alt="`${article.title} - 第${idx + 1}部分`"
             loading="lazy"
             decoding="async"
             :fetchpriority="idx < 3 ? 'high' : 'low'"

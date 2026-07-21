@@ -10,7 +10,6 @@ const hoveredId = ref<string | null>(null)
 const dims = ref({ w: 800, h: 520 })
 
 let simulation: d3.Simulation<d3.SimulationNodeDatum, undefined> | null = null
-let svgEl: SVGElement | null = null
 let particleInterval: number | null = null
 
 function updateDims() {
@@ -45,8 +44,8 @@ function initGraph() {
   const h = dims.value.h
 
   // 准备 D3 数据（深拷贝）
-  const nodes = nodeData.map(n => ({ ...n, x: (n.x / 100) * w, y: (n.y / 100) * h }))
-  const links = edgeData.map(e => ({
+  const nodes = nodeData.map((n: any) => ({ ...n, x: (n.x / 100) * w, y: (n.y / 100) * h }))
+  const links = edgeData.map((e: any) => ({
     source: e.source,
     target: e.target,
     label: e.label,
@@ -59,8 +58,6 @@ function initGraph() {
     .attr('height', h)
     .attr('class', 'graph-svg')
     .style('touch-action', 'none')
-
-  svgEl = svg.node()
 
   // 定义滤镜
   const defs = svg.append('defs')
@@ -91,19 +88,19 @@ function initGraph() {
   // 连线标签
   const linkLabelGroup = svg.append('g').attr('class', 'link-labels')
   const linkLabels = linkLabelGroup.selectAll('text')
-    .data(links.filter(l => l.label))
+    .data(links.filter((l: any) => l.label))
     .join('text')
     .attr('class', 'link-label')
     .attr('text-anchor', 'middle')
     .attr('dy', -6)
-    .text(d => d.label!)
+    .text((d: any) => d.label!)
 
   // ---- 粒子连线 ----
   const particleGroup = svg.append('g').attr('class', 'particles')
 
   // 为每条边创建粒子
   const particles: { element: d3.Selection<SVGCircleElement, unknown, null, undefined>; progress: number; speed: number }[] = []
-  links.forEach((link, i) => {
+  links.forEach(() => {
     const p = particleGroup.append('circle')
       .attr('r', 2.5)
       .attr('fill', '#c9a84c')
@@ -139,13 +136,13 @@ function initGraph() {
   // 计算每个节点的半径：基于最长行字数
   function nodeRadius(d: typeof nodes[0]): number {
     const lines = d.label.split('\\n')
-    const maxLen = Math.max(...lines.map(l => l.length))
+    const maxLen = Math.max(...lines.map((l: any) => (l as string).length))
     return Math.max(18, Math.min(38, 12 + maxLen * 4.5))
   }
 
   function nodeFontSize(d: typeof nodes[0]): number {
     const lines = d.label.split('\\n')
-    const maxLen = Math.max(...lines.map(l => l.length))
+    const maxLen = Math.max(...lines.map((l: any) => (l as string).length))
     if (maxLen <= 3) return 0.75
     if (maxLen <= 5) return 0.65
     return 0.55
@@ -186,12 +183,12 @@ function initGraph() {
 
   // 处理换行标签 + 文字描边使其在节点内清晰
   nodeLabels.each(function (d: any) {
-    const el = d3.select(this)
+    const el = d3.select(this as SVGElement)
     const lines = d.label.split('\\n')
     if (lines.length > 1) {
       el.text('')
       const lineH = nodeFontSize(d) <= 0.6 ? 10 : 12
-      lines.forEach((line, i) => {
+      lines.forEach((line: string, i: number) => {
         el.append('tspan')
           .attr('x', 0)
           .attr('dy', i === 0 ? 0 : lineH)
@@ -202,21 +199,21 @@ function initGraph() {
 
   // ---- 交互 ----
   nodeCircles
-    .on('mouseenter', function (_, d) {
+    .on('mouseenter', function (_: any, d: any) {
       hoveredId.value = d.id
-      nodeCircles.attr('opacity', n => !hoveredId.value || hoveredId.value === n.id || isConnected(n.id, hoveredId.value!) ? 0.9 : 0.15)
-      nodeLabels.attr('opacity', n => !hoveredId.value || hoveredId.value === n.id || isConnected(n.id, hoveredId.value!) ? 1 : 0.15)
-      nodeGlow.attr('opacity', n => n.id === d.id ? 0.15 : 0)
-      linkPaths.attr('opacity', l => !hoveredId.value || l.source === hoveredId.value || l.target === hoveredId.value || 
-        (typeof l.source === 'object' && (l.source as any).id === hoveredId.value) ||
-        (typeof l.target === 'object' && (l.target as any).id === hoveredId.value) ? 1 : 0.08)
-        .attr('stroke', l => hoveredId.value && (l.source === hoveredId.value || l.target === hoveredId.value || 
-          (typeof l.source === 'object' && (l.source as any).id === hoveredId.value) ||
-          (typeof l.target === 'object' && (l.target as any).id === hoveredId.value)) ? nodeColors[nodes.find(n => n.id === hoveredId.value)?.type || 'concept'] : undefined)
-      linkLabels.attr('opacity', l => !hoveredId.value || 
+      nodeCircles.attr('opacity', (n: any) => !hoveredId.value || hoveredId.value === n.id || isConnected(n.id, hoveredId.value!) ? 0.9 : 0.15)
+      nodeLabels.attr('opacity', (n: any) => !hoveredId.value || hoveredId.value === n.id || isConnected(n.id, hoveredId.value!) ? 1 : 0.15)
+      nodeGlow.attr('opacity', (n: any) => n.id === d.id ? 0.15 : 0)
+      linkPaths.attr('opacity', (l: any) => !hoveredId.value || l.source === hoveredId.value || l.target === hoveredId.value || 
+        (typeof l.source === 'object' && l.source.id === hoveredId.value) ||
+        (typeof l.target === 'object' && l.target.id === hoveredId.value) ? 1 : 0.08)
+        .attr('stroke', (l: any) => hoveredId.value && (l.source === hoveredId.value || l.target === hoveredId.value || 
+          (typeof l.source === 'object' && l.source.id === hoveredId.value) ||
+          (typeof l.target === 'object' && l.target.id === hoveredId.value)) ? nodeColors[nodes.find((n: any) => n.id === hoveredId.value)?.type || 'concept'] : null)
+      linkLabels.attr('opacity', (l: any) => !hoveredId.value || 
         l.source === hoveredId.value || l.target === hoveredId.value ||
-        (typeof l.source === 'object' && (l.source as any).id === hoveredId.value) ||
-        (typeof l.target === 'object' && (l.target as any).id === hoveredId.value) ? 1 : 0.08)
+        (typeof l.source === 'object' && l.source.id === hoveredId.value) ||
+        (typeof l.target === 'object' && l.target.id === hoveredId.value) ? 1 : 0.08)
     })
     .on('mouseleave', () => {
       hoveredId.value = null
@@ -226,7 +223,7 @@ function initGraph() {
       linkPaths.attr('opacity', 1).attr('stroke', null)
       linkLabels.attr('opacity', 1)
     })
-    .on('click', (_, d) => {
+    .on('click', (_: any, d: any) => {
       if (d.link) router.push(d.link)
       else if (d.search) router.push({ path: '/archive', query: { search: d.search } })
     })
@@ -265,16 +262,16 @@ function initGraph() {
 
   // ---- 拖拽 ----
   const drag = d3.drag<SVGCircleElement, any>()
-    .on('start', (event, d) => {
+    .on('start', (event: any, d: any) => {
       if (!event.active) simulation?.alphaTarget(0.3).restart()
       d.fx = d.x
       d.fy = d.y
     })
-    .on('drag', (event, d) => {
+    .on('drag', (event: any, d: any) => {
       d.fx = event.x
       d.fy = event.y
     })
-    .on('end', (event, d) => {
+    .on('end', (event: any, d: any) => {
       if (!event.active) simulation?.alphaTarget(0)
       d.fx = null
       d.fy = null
