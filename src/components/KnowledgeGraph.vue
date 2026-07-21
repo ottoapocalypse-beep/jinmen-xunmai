@@ -15,8 +15,8 @@ const pos = reactive<Record<string, { x: number; y: number }>>({})
 const vel: Record<string, { x: number; y: number }> = {}
 
 rawNodes.forEach(n => {
-  // 随机初始位置（避免全部重叠在中心）
-  pos[n.id] = { x: 0.15 + Math.random() * 0.7, y: 0.15 + Math.random() * 0.7 }
+  // 使用原始百分比坐标（手动设计的合理布局），不做随机
+  pos[n.id] = { x: n.x / 100, y: n.y / 100 }
   vel[n.id] = { x: 0, y: 0 }
 })
 
@@ -25,18 +25,20 @@ function px(n: { x: number; y: number }) {
 }
 
 /* ---- 力模拟 ---- */
-const REP = 600    // 排斥力
-const ATT = 0.003  // 弹簧系数
+const REP = 200    // 排斥力（减弱）
+const ATT = 0.001  // 弹簧系数（减弱）
 const REST = 0.14  // 弹簧自然长度
-const CTR = 0.003  // 向心力
-const DAMP = 0.88  // 阻尼
+const CTR = 0.002  // 向心力
+const DAMP = 0.90  // 阻尼
 
 let animId = 0
+let frameCount = 0
 
 function tick() {
   const n = rawNodes.length
   if (n === 0) { settled.value = true; return }
-  let ke = 0 // 总动能
+  let ke = 0
+  frameCount++ // 总动能
 
   for (let a = 0; a < n; a++) {
     const idA = rawNodes[a].id
@@ -90,7 +92,7 @@ function tick() {
     pA.y = Math.max(0.03, Math.min(0.97, pA.y))
   }
 
-  settled.value = ke < 0.005 * n
+  settled.value = ke < 0.02 * n || frameCount > 180  // 最多跑3秒(60fps×3)
   if (!settled.value || dragging.value) {
     animId = requestAnimationFrame(tick)
   }
@@ -98,6 +100,7 @@ function tick() {
 
 function start() {
   settled.value = false
+  frameCount = 0
   cancelAnimationFrame(animId)
   animId = requestAnimationFrame(tick)
 }
