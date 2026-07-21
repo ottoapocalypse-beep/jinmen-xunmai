@@ -97,19 +97,21 @@ function chunkUrl(index: number): string {
 .detail-summary { font-family: var(--font-sans); font-size: 0.85rem; color: var(--color-text-secondary); line-height: 1.7; }
 
 /* ===== 正文分块 ===== */
-.detail-body { padding: 0 var(--space-lg); }
+.detail-body { padding: 0 var(--space-lg); line-height: 0; }
 
 .detail-chunk {
   margin: 0;
   padding: 0;
+  display: block;
+  line-height: 0;
 }
 
 .chunk-img {
   width: 100%;
   height: auto;
   display: block;
-  border-radius: var(--radius-sm);
-  margin-bottom: 2px;
+  border: none;
+  outline: none;
 }
 
 /* ===== 文末 ===== */
