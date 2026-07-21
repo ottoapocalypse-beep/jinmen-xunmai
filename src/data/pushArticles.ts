@@ -32,4 +32,13 @@ export const pushArticles: PushArticle[] = [
     chunks: 18,
     tags: ['推送', '校史'],
   },
+  {
+    id: 'push-3',
+    title: '津门寻脉 | 一份校史时间轴，看北科大的"天津基因"',
+    date: '2026-07-21',
+    summary: '用一条时间轴讲清北科大与生俱来的"天津基因"：1895年北洋西学学堂创办矿冶学科 → 1952年天大矿冶系牵头六校合并建校 → 1960年更名北京钢铁学院 → 1988年定名北京科技大学。',
+    link: 'https://mp.weixin.qq.com/s/-zyyrm_WiNHi3UmyLIWKog',
+    chunks: 14,
+    tags: ['推送', '校史', '时间轴'],
+  },
 ]
