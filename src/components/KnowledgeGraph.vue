@@ -35,6 +35,12 @@ watch(dims, () => {
     simulation.force('center', d3.forceCenter(dims.value.w / 2, dims.value.h / 2))
     simulation.alpha(0.3).restart()
   }
+  // 更新 SVG 尺寸
+  const svg = containerRef.value?.querySelector('.graph-svg')
+  if (svg) {
+    svg.setAttribute('width', String(dims.value.w))
+    svg.setAttribute('height', String(dims.value.h))
+  }
 })
 
 function initGraph() {
@@ -58,8 +64,22 @@ function initGraph() {
     .attr('height', h)
     .attr('class', 'graph-svg')
     .style('touch-action', 'none')
+    .style('cursor', 'grab')
 
-  // 定义滤镜
+  // 缩放容器组 —— 所有元素都放在这个组里，由 zoom 统一变换
+  const zoomGroup = svg.append('g').attr('class', 'zoom-group')
+
+  // 背景矩形 —— 让空白区域也能拖拽平移
+  zoomGroup.append('rect')
+    .attr('class', 'zoom-bg')
+    .attr('x', -w * 2)
+    .attr('y', -h * 2)
+    .attr('width', w * 4)
+    .attr('height', h * 4)
+    .attr('fill', 'transparent')
+    .style('pointer-events', 'all')
+
+  // ---- 定义滤镜 ----
   const defs = svg.append('defs')
   defs.append('filter').attr('id', 'glow-d3')
     .append('feDropShadow').attr('dx', 0).attr('dy', 0).attr('stdDeviation', 4).attr('flood-opacity', 0.5)
@@ -78,7 +98,7 @@ function initGraph() {
     .attr('fill', 'var(--color-border)')
 
   // ---- 连线 ----
-  const linkGroup = svg.append('g').attr('class', 'links')
+  const linkGroup = zoomGroup.append('g').attr('class', 'links')
   const linkPaths = linkGroup.selectAll('path')
     .data(links)
     .join('path')
@@ -86,7 +106,7 @@ function initGraph() {
     .attr('marker-end', 'url(#arrow-d3)')
 
   // 连线标签
-  const linkLabelGroup = svg.append('g').attr('class', 'link-labels')
+  const linkLabelGroup = zoomGroup.append('g').attr('class', 'link-labels')
   const linkLabels = linkLabelGroup.selectAll('text')
     .data(links.filter((l: any) => l.label))
     .join('text')
@@ -96,7 +116,7 @@ function initGraph() {
     .text((d: any) => d.label!)
 
   // ---- 粒子连线 ----
-  const particleGroup = svg.append('g').attr('class', 'particles')
+  const particleGroup = zoomGroup.append('g').attr('class', 'particles')
 
   // 为每条边创建粒子
   const particles: { element: d3.Selection<SVGCircleElement, unknown, null, undefined>; progress: number; speed: number }[] = []
@@ -131,7 +151,7 @@ function initGraph() {
   animateParticles()
 
   // ---- 节点 ----
-  const nodeGroup = svg.append('g').attr('class', 'nodes')
+  const nodeGroup = zoomGroup.append('g').attr('class', 'nodes')
 
   // 计算每个节点的半径：基于最长行字数
   function nodeRadius(d: typeof nodes[0]): number {
@@ -260,7 +280,22 @@ function initGraph() {
       nodeLabels.attr('x', (d: any) => d.x).attr('y', (d: any) => d.y)
     })
 
-  // ---- 拖拽 ----
+  // ---- 缩放 & 平移（背景拖拽 / 手机双指） ----
+  let zoomTransform = d3.zoomIdentity
+
+  const zoom = d3.zoom<SVGSVGElement, unknown>()
+    .scaleExtent([0.3, 3])
+    .filter((event: any) => !event.button) // 仅左键和触摸拖拽
+    .on('zoom', (event: any) => {
+      zoomTransform = event.transform
+      zoomGroup.attr('transform', zoomTransform.toString())
+      // 拖拽时切换光标
+      svg.style('cursor', event.sourceEvent?.type === 'mousemove' ? 'grabbing' : 'grab')
+    })
+
+  svg.call(zoom)
+
+  // ---- 拖拽节点（坐标已适配缩放） ----
   const drag = d3.drag<SVGCircleElement, any>()
     .on('start', (event: any, d: any) => {
       if (!event.active) simulation?.alphaTarget(0.3).restart()
@@ -268,8 +303,8 @@ function initGraph() {
       d.fy = d.y
     })
     .on('drag', (event: any, d: any) => {
-      d.fx = event.x
-      d.fy = event.y
+      d.fx = (event.x - zoomTransform.x) / zoomTransform.k
+      d.fy = (event.y - zoomTransform.y) / zoomTransform.k
     })
     .on('end', (event: any, d: any) => {
       if (!event.active) simulation?.alphaTarget(0)
@@ -291,7 +326,7 @@ function isConnected(nodeId: string, targetId: string): boolean {
 <template>
   <section class="graph-section">
     <h2 class="graph-title">校史知识图谱</h2>
-    <p class="graph-subtitle">力导向布局 · 拖拽节点 · 悬停查看关联 · 点击跳转</p>
+    <p class="graph-subtitle">拖拽背景平移 · 双指缩放 · 拖拽节点 · 悬停查看关联 · 点击跳转</p>
 
     <div ref="containerRef" class="graph-container">
       <div class="graph-hint">
