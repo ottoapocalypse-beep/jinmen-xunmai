@@ -41,4 +41,13 @@ export const pushArticles: PushArticle[] = [
     chunks: 11,
     tags: ['推送', '校史', '时间轴'],
   },
+  {
+    id: 'push-4',
+    title: '津门寻脉 | 去天津，找我们大学的前半生',
+    date: '2026-07-22',
+    summary: '去天津，找我们大学的前半生——走进天津大学（北洋大学）校园，探访校史馆，溯源1952年院系调整中天大矿冶学科并入北京钢铁工业学院的那段历史。',
+    link: 'https://mp.weixin.qq.com/s/CIIwTbYOwptqT7619uIDNA',
+    chunks: 10,
+    tags: ['推送', '校史', '天津大学', '溯源'],
+  },
 ]

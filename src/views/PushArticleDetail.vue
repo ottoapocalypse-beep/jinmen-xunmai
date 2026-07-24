@@ -11,7 +11,10 @@ const article = pushArticles.find(a => a.id === route.params.id)
 function chunkUrl(index: number): string {
   const id = article!.id
   // push-1 实际对应 push-2 的图，push-2 对应 push-1 的图
-  const fileId = id === 'push-1' ? '2' : '1'
+  let fileId: string
+  if (id === 'push-1') fileId = '2'
+  else if (id === 'push-2') fileId = '1'
+  else fileId = id.replace('push-', '') // push-3 -> 3, push-4 -> 4
   return `/jinmen-xunmai/push/push-${fileId}_${index}.jpg`
 }
 </script>
