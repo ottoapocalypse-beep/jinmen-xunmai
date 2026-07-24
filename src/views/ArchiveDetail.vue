@@ -21,9 +21,35 @@ const categoryIcon: Record<string, string> = {
   manuscript: '✍️', other: '📎',
 }
 
-// 渲染 content 中的 Markdown 级别标题
+// 标题 → ID 映射（用于 [[关联条目]] 跳转）
+const titleToId: Record<string, string> = {}
+archiveItems.forEach(item => {
+  // 去掉 —— 后缀，方便匹配 [[条目名]]
+  const key = item.title.replace(/[———].*$/, '').replace(/[（(].*[）)]$/, '').trim()
+  titleToId[key] = item.id
+  titleToId[item.title] = item.id
+})
+
+// 渲染 content 中的 Markdown 级别标题 + [[关联条目]] 跳转
 function renderContent(text: string): string {
-  return text
+  let html = text
+  // 先处理 [[关联条目]] → 链接
+  html = html.replace(/\[\[(.+?)\]\]/g, (_, name: string) => {
+    // 精确匹配
+    let id = titleToId[name.trim()]
+    if (!id) {
+      // 模糊匹配：取标题前几个字
+      const key = Object.keys(titleToId).find(k => k.includes(name.trim()))
+      if (key) id = titleToId[key]
+    }
+    if (id) {
+      return `<a href="#/archive/${id}" class="archive-link">${name}</a>`
+    }
+    // 没匹配到则保留原文
+    return `<span class="archive-link-missing">${name}</span>`
+  })
+  // Markdown 样式
+  html = html
     .replace(/^### (.*$)/gm, '<h3>$1</h3>')
     .replace(/^## (.*$)/gm, '<h2>$1</h2>')
     .replace(/^# (.*$)/gm, '<h1>$1</h1>')
@@ -31,10 +57,12 @@ function renderContent(text: string): string {
     .replace(/^- (.*$)/gm, '<li>$1</li>')
     .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
     .replace(/\n\n/g, '</p><p>')
-    .replace(/^(.+)$/gm, (match) => {
-      if (match.startsWith('<')) return match
-      return match
-    })
+  // 剩余行包裹 p
+  html = html.replace(/^(.+)$/gm, (match) => {
+    if (match.startsWith('<')) return match
+    return `<p>${match}</p>`
+  })
+  return html
 }
 </script>
 
@@ -254,6 +282,20 @@ function renderContent(text: string): string {
 .detail-body :deep(th) {
   background: var(--color-bg-alt);
   font-weight: 600;
+}
+
+.detail-body :deep(.archive-link) {
+  color: var(--color-gold-dark);
+  text-decoration: underline;
+  font-weight: 600;
+  transition: opacity var(--transition-fast);
+}
+.detail-body :deep(.archive-link:hover) {
+  opacity: 0.7;
+}
+.detail-body :deep(.archive-link-missing) {
+  color: var(--color-text-light);
+  cursor: default;
 }
 
 .detail-body-empty {
