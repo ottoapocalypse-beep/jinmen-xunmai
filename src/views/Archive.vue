@@ -14,9 +14,13 @@ const activeCategory = ref<string>('all')
 
 const categories = [
   { key: 'all', label: '全部' },
+  { key: 'institution', label: '机构' },
+  { key: 'event', label: '事件' },
+  { key: 'person', label: '人物' },
+  { key: 'concept', label: '概念' },
+  { key: 'document', label: '文件' },
   { key: 'photo', label: '老照片' },
   { key: 'manuscript', label: '手稿' },
-  { key: 'document', label: '文件' },
   { key: 'other', label: '其他' },
 ]
 
@@ -292,7 +296,7 @@ const typeColor: Record<string, string> = nodeColors
         <div v-for="item in filteredItems" :key="item.id" class="floating-card">
           <div class="card-title">{{ item.title }}</div>
           <div class="card-subtitle">
-            <span class="tag">{{ ({ photo: '老照片', manuscript: '手稿', document: '文件', other: '其他' } as any)[item.category] }}</span>
+            <span class="tag">{{ ({ photo: '老照片', manuscript: '手稿', document: '文件', other: '其他', person: '人物', event: '事件', institution: '机构', concept: '概念' } as any)[item.category] }}</span>
             <span v-if="item.date" class="card-date">{{ item.date }}</span>
           </div>
           <div class="card-body">{{ item.description }}</div>
