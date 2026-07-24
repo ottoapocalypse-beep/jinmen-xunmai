@@ -291,7 +291,24 @@ onMounted(async () => {
         </button>
       </section>
 
-      <!-- ──── 7. 站点地图 ──── -->
+      <!-- ──── 快捷入口 ──── -->
+      <section class="section">
+        <h2 class="section-title">🔗 快捷入口</h2>
+        <div class="quick-links">
+          <a href="#/progress" class="quick-link">
+            <span class="ql-icon">📋</span>
+            <span class="ql-text">采访进度看板</span>
+            <span class="ql-arrow">→</span>
+          </a>
+          <a href="#/admin" class="quick-link">
+            <span class="ql-icon">⚙️</span>
+            <span class="ql-text">管理面板（当前）</span>
+            <span class="ql-arrow">→</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- ──── 8. 站点地图 ──── -->
       <section class="section">
         <h2 class="section-title">🗺️ 站点地图</h2>
         <div class="sitemap-tree">
@@ -485,4 +502,18 @@ onMounted(async () => {
 .tree-label { margin-right: var(--space-sm); }
 .tree-path { color: var(--color-text-secondary); font-size: 0.8rem; font-family: monospace; }
 .admin-node { opacity: 0.5; }
+
+/* ===== 快捷入口 ===== */
+.quick-links { display: flex; flex-direction: column; gap: var(--space-sm); }
+.quick-link {
+  display: flex; align-items: center; gap: var(--space-sm);
+  padding: var(--space-md); background: var(--color-bg-card);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+  text-decoration: none; color: inherit;
+  transition: all var(--transition-fast);
+}
+.quick-link:hover { box-shadow: var(--shadow-md); transform: translateX(4px); }
+.ql-icon { font-size: 1.2rem; }
+.ql-text { flex: 1; font-weight: 500; }
+.ql-arrow { color: var(--color-text-secondary); font-size: 1.1rem; }
 </style>

@@ -103,6 +103,12 @@ const router = createRouter({
       component: () => import('@/views/AdminStats.vue'),
       meta: { title: '站点管理', titleEn: 'Admin' },
     },
+    {
+      path: '/progress',
+      name: 'progress',
+      component: () => import('@/views/ProgressBoard.vue'),
+      meta: { title: '采访进度', titleEn: 'Progress' },
+    },
   ],
 })
 
