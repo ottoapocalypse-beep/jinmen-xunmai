@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { archiveItems } from '@/data/archive'
 import { nodes as kgNodes, edges as kgEdges, nodeColors } from '@/data/knowledgeGraph'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 const route = useRoute()
+const router = useRouter()
 
 // ──── 列表模式 ────
 const searchQuery = ref('')
@@ -49,15 +50,26 @@ const detailInfo = ref<{ label: string; type: string; id: string; related: strin
 
 // 图谱关联 → 数据库条目映射
 const nodeToArchive: Record<string, { title: string; link: string }[]> = {
-  tju: [{ title: '天津大学校史（百度百科）', link: 'https://baike.baidu.com/item/%E5%A4%A9%E6%B4%A5%E5%A4%A7%E5%AD%A6' }],
-  ustb: [{ title: '北京科技大学校史（百度百科）', link: 'https://baike.baidu.com/item/%E5%8C%97%E4%BA%AC%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%A6' }],
-  adjustment: [{ title: '1952年院系调整（百度百科）', link: 'https://baike.baidu.com/item/1952%E5%B9%B4%E9%99%A2%E7%B3%BB%E8%B0%83%E6%95%B4' }],
+  tju: [{ title: '📖 查看档案：天津大学', link: '#/archive/arch-inst-2' }],
+  ustb: [{ title: '📖 查看档案：北京科技大学', link: '#/archive/arch-inst-5' }],
+  byang: [{ title: '📖 查看档案：北洋西学学堂', link: '#/archive/arch-inst-1' }],
+  bis: [{ title: '📖 查看档案：北京钢铁工业学院', link: '#/archive/arch-inst-3' }],
+  bis2: [{ title: '📖 查看档案：北京钢铁学院', link: '#/archive/arch-inst-4' }],
+  adjustment: [{ title: '📖 查看档案：1952年院系调整', link: '#/archive/arch-ev-1' }],
+  founded: [{ title: '📖 查看档案：建校历程', link: '#/archive/arch-ev-2' }],
+  practice: [{ title: '📖 查看档案：社会实践', link: '#/archive/arch-ev-3' }],
+  prof_xiao: [{ title: '📖 查看档案：肖纪美院士', link: '#/archive/arch-person-1' }],
+  materials: [{ title: '📖 查看档案：材料学科', link: '#/archive/arch-inst-6' }],
+  museum: [{ title: '📖 查看档案：校史馆', link: '#/archive/arch-inst-7' }],
+  casting: [{ title: '📖 查看档案：铸造与材料成型', link: '#/archive/arch-concept-3' }],
+  metallurgy: [{ title: '📖 查看档案：冶金工程', link: '#/archive/arch-concept-1' }],
+  mining: [{ title: '📖 查看档案：采矿工程', link: '#/archive/arch-concept-2' }],
+  manjing_loc: [{ title: '📖 查看档案：满井村', link: '#/archive/arch-concept-4' }],
+  qiushi: [{ title: '📖 查看档案：求实鼎新', link: '#/archive/arch-concept-5' }],
+  steel: [{ title: '📖 查看档案：钢铁强国', link: '#/archive/arch-concept-6' }],
+  oral: [{ title: '📖 查看档案：口述史', link: '#/archive/arch-concept-7' }],
+  push: [{ title: '📖 查看档案：推送文集', link: '#/archive/arch-doc-1' }],
   jinmen: [{ title: '关于实践 →', link: '#/about' }],
-  push: [{ title: '推送文集 →', link: '#/push-articles' }],
-  archive: [{ title: '本页', link: '' }],
-  museum: [{ title: '本页', link: '' }],
-  casting: [{ title: '铸造学科（百度百科）', link: 'https://baike.baidu.com/item/%E9%93%B8%E9%80%A0' }],
-  metallurgy: [{ title: '冶金工程（百度百科）', link: 'https://baike.baidu.com/item/%E5%86%B6%E9%87%91%E5%B7%A5%E7%A8%8B' }],
 }
 
 // Three.js 相关
@@ -293,14 +305,17 @@ const typeColor: Record<string, string> = nodeColors
       </div>
 
       <div v-else class="card-grid">
-        <div v-for="item in filteredItems" :key="item.id" class="floating-card">
+        <div v-for="item in filteredItems" :key="item.id" class="floating-card" @click="router.push('/archive/' + item.id)">
           <div class="card-title">{{ item.title }}</div>
           <div class="card-subtitle">
             <span class="tag">{{ ({ photo: '老照片', manuscript: '手稿', document: '文件', other: '其他', person: '人物', event: '事件', institution: '机构', concept: '概念' } as any)[item.category] }}</span>
             <span v-if="item.date" class="card-date">{{ item.date }}</span>
           </div>
           <div class="card-body">{{ item.description }}</div>
-          <div v-if="item.source" class="card-source">来源：{{ item.source }}</div>
+          <div class="card-footer">
+            <span v-if="item.source" class="card-source">来源：{{ item.source }}</span>
+            <span v-if="item.content" class="card-readmore">阅读全文 →</span>
+          </div>
         </div>
       </div>
     </template>
@@ -401,6 +416,15 @@ const typeColor: Record<string, string> = nodeColors
 
 .card-date { margin-left: 8px; color: var(--color-text-secondary); font-size: 0.85rem; }
 .card-source { margin-top: var(--space-sm); font-family: var(--font-sans); font-size: 0.8rem; color: var(--color-text-secondary); }
+.floating-card { cursor: pointer; }
+.card-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: var(--space-sm);
+}
+.card-readmore {
+  font-family: var(--font-sans); font-size: 0.8rem;
+  color: var(--color-gold-dark); font-weight: 600;
+}
 
 .empty-state { text-align: center; padding: var(--space-3xl); color: var(--color-text-light); }
 .empty-icon { font-size: 2.5rem; margin-bottom: var(--space-sm); }

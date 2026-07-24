@@ -109,6 +109,12 @@ const router = createRouter({
       component: () => import('@/views/ProgressBoard.vue'),
       meta: { title: '采访进度', titleEn: 'Progress' },
     },
+    {
+      path: '/archive/:id',
+      name: 'archiveDetail',
+      component: () => import('@/views/ArchiveDetail.vue'),
+      meta: { title: '档案详情', titleEn: 'Archive Detail' },
+    },
   ],
 })
 
