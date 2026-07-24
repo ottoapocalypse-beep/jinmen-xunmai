@@ -21,6 +21,10 @@ function updateDims() {
 onMounted(() => {
   updateDims()
   window.addEventListener('resize', updateDims)
+  // 阻止移动端触摸事件冒泡到页面滚动
+  if (containerRef.value) {
+    containerRef.value.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false })
+  }
   initGraph()
 })
 
@@ -371,6 +375,7 @@ function isConnected(nodeId: string, targetId: string): boolean {
   background: var(--color-bg-alt);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  touch-action: none;
 }
 
 .graph-container :deep(.graph-svg) {
