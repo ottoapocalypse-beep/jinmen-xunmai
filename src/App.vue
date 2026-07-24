@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import AppSidebar from '@/components/AppSidebar.vue'
 import AppTopbar from '@/components/AppTopbar.vue'
 import AppFooter from '@/components/AppFooter.vue'
+import { initMouseGlow, initTilt } from '@/utils/effects'
 
 const sidebarOpen = ref(false)
 
@@ -24,13 +25,23 @@ function handleResize(e: MediaQueryListEvent | MediaQueryList) {
   }
 }
 
+let cleanupGlow: (() => void) | null = null
+let cleanupTilt: (() => void) | null = null
+
 onMounted(() => {
   mql = window.matchMedia('(max-width: 768px)')
   mql.addEventListener('change', handleResize as EventListener)
+
+  // 特效初始化
+  cleanupGlow = initMouseGlow(document.body)
+  // 延迟初始化 tilt 让 DOM 渲染完成
+  setTimeout(() => { const c = initTilt(); if (c) cleanupTilt = c }, 300)
 })
 
 onUnmounted(() => {
   mql?.removeEventListener('change', handleResize as EventListener)
+  cleanupGlow?.()
+  cleanupTilt?.()
 })
 </script>
 
