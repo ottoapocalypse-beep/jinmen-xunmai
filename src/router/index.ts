@@ -109,12 +109,6 @@ const router = createRouter({
       component: () => import('@/views/ProgressBoard.vue'),
       meta: { title: '采访进度', titleEn: 'Progress' },
     },
-    {
-      path: '/graph',
-      name: 'graph',
-      component: () => import('@/views/Graph3D.vue'),
-      meta: { title: '3D知识图谱', titleEn: '3D Graph' },
-    },
   ],
 })
 
