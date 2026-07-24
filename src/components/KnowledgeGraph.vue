@@ -1,293 +1,365 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import * as d3 from 'd3'
 import { nodes as nodeData, edges as edgeData, nodeColors } from '@/data/knowledgeGraph'
 
 const router = useRouter()
 const containerRef = ref<HTMLElement | null>(null)
-const tooltipPos = ref({ x: 0, y: 0 })
-const tooltipText = ref('')
-const tooltipVisible = ref(false)
+const hoveredId = ref<string | null>(null)
+const dims = ref({ w: 800, h: 520 })
 
-let scene: THREE.Scene
-let camera: THREE.PerspectiveCamera
-let renderer: THREE.WebGLRenderer
-let controls: OrbitControls
-let frameId: number
-let raycaster: THREE.Raycaster
-let mouse: THREE.Vector2
-let nodeMeshes: THREE.Mesh[] = []
-let linkLines: THREE.Line[] = []
-let particleUpdates: (() => void)[] = []
+let simulation: d3.Simulation<d3.SimulationNodeDatum, undefined> | null = null
+let particleInterval: number | null = null
 
-function initThree() {
+function updateDims() {
+  if (containerRef.value) {
+    dims.value = { w: containerRef.value.clientWidth, h: containerRef.value.clientHeight }
+  }
+}
+
+onMounted(() => {
+  updateDims()
+  window.addEventListener('resize', updateDims)
+  // 阻止移动端触摸事件冒泡到页面滚动
+  if (containerRef.value) {
+    containerRef.value.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false })
+  }
+  initGraph()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateDims)
+  if (simulation) simulation.stop()
+  if (particleInterval) cancelAnimationFrame(particleInterval)
+})
+
+watch(dims, () => {
+  if (simulation) {
+    simulation.force('center', d3.forceCenter(dims.value.w / 2, dims.value.h / 2))
+    simulation.alpha(0.3).restart()
+  }
+  // 更新 SVG 尺寸
+  const svg = containerRef.value?.querySelector('.graph-svg')
+  if (svg) {
+    svg.setAttribute('width', String(dims.value.w))
+    svg.setAttribute('height', String(dims.value.h))
+  }
+})
+
+function initGraph() {
   if (!containerRef.value) return
 
-  const w = containerRef.value.clientWidth
-  const h = containerRef.value.clientHeight
+  const w = dims.value.w
+  const h = dims.value.h
 
-  scene = new THREE.Scene()
-  scene.background = new THREE.Color(0xf5f0e8)
-
-  camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000)
-  camera.position.set(0, 2, 24)
-  camera.lookAt(0, 0, 0)
-
-  renderer = new THREE.WebGLRenderer({ antialias: true })
-  renderer.setSize(w, h)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.shadowMap.enabled = true
-  containerRef.value.appendChild(renderer.domElement)
-
-  controls = new OrbitControls(camera, renderer.domElement)
-  controls.enableDamping = true
-  controls.dampingFactor = 0.08
-  controls.minDistance = 8
-  controls.maxDistance = 50
-  controls.autoRotate = true
-  controls.autoRotateSpeed = 0.6
-
-  // 灯光
-  scene.add(new THREE.AmbientLight(0xffffff, 0.5))
-  const dl = new THREE.DirectionalLight(0xffffff, 0.8)
-  dl.position.set(5, 10, 7)
-  scene.add(dl)
-  const fl = new THREE.DirectionalLight(0xffd4a0, 0.3)
-  fl.position.set(-5, 0, 5)
-  scene.add(fl)
-
-  raycaster = new THREE.Raycaster()
-  mouse = new THREE.Vector2()
-
-  buildGraph(w, h)
-
-  renderer.domElement.addEventListener('pointermove', onPointerMove)
-  renderer.domElement.addEventListener('click', onClick)
-  window.addEventListener('resize', onResize)
-
-  animate()
-}
-
-function buildGraph(w: number, h: number) {
-  const s = Math.min(w, h) / 18 // scale factor
-
-  // Map 2D coords to 3D
-  const nodes = nodeData.map((n, i) => ({
-    ...n,
-    x: ((n.x / 100) * w - w / 2) / s,
-    y: (-(n.y / 100) * h + h / 2) / s,
-    z: (i % 5 - 2) * 1.8,
+  // 准备 D3 数据（深拷贝）
+  const nodes = nodeData.map((n: any) => ({ ...n, x: (n.x / 100) * w, y: (n.y / 100) * h }))
+  const links = edgeData.map((e: any) => ({
+    source: e.source,
+    target: e.target,
+    label: e.label,
   }))
 
-  const links = edgeData.map(e => ({
-    source: nodes.find(n => n.id === e.source)!,
-    target: nodes.find(n => n.id === e.target)!,
-    label: e.label,
-  })).filter(l => l.source && l.target)
+  // 创建 SVG
+  const svg = d3.select(containerRef.value)
+    .append('svg')
+    .attr('width', w)
+    .attr('height', h)
+    .attr('class', 'graph-svg')
+    .style('touch-action', 'none')
+    .style('cursor', 'grab')
 
-  // ── Links ──
-  links.forEach(link => {
-    const p = [
-      new THREE.Vector3(link.source.x, link.source.y, link.source.z),
-      new THREE.Vector3(link.target.x, link.target.y, link.target.z),
-    ]
-    const geo = new THREE.BufferGeometry().setFromPoints(p)
-    const mat = new THREE.LineBasicMaterial({
-      color: 0xc9a84c, transparent: true, opacity: 0.3,
-    })
-    const line = new THREE.Line(geo, mat)
-    scene.add(line)
-    linkLines.push(line)
+  // 缩放容器组 —— 所有元素都放在这个组里，由 zoom 统一变换
+  const zoomGroup = svg.append('g').attr('class', 'zoom-group')
 
-    // ── Particles on link ──
-    const count = 2
-    const pos = new Float32Array(count * 3)
-    const pGeo = new THREE.BufferGeometry()
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-    const pMat = new THREE.PointsMaterial({
-      color: 0xc9a84c, size: 0.25, transparent: true, opacity: 0.6,
-    })
-    const points = new THREE.Points(pGeo, pMat)
-    scene.add(points)
+  // 背景矩形 —— 让空白区域也能拖拽平移
+  zoomGroup.append('rect')
+    .attr('class', 'zoom-bg')
+    .attr('x', -w * 2)
+    .attr('y', -h * 2)
+    .attr('width', w * 4)
+    .attr('height', h * 4)
+    .attr('fill', 'transparent')
+    .style('pointer-events', 'all')
 
-    const prog = Array.from({ length: count }, () => Math.random())
-    const spd = Array.from({ length: count }, () => 0.003 + Math.random() * 0.005)
+  // ---- 定义滤镜 ----
+  const defs = svg.append('defs')
+  defs.append('filter').attr('id', 'glow-d3')
+    .append('feDropShadow').attr('dx', 0).attr('dy', 0).attr('stdDeviation', 4).attr('flood-opacity', 0.5)
 
-    particleUpdates.push(() => {
-      const a = points.geometry.attributes.position.array as Float32Array
-      for (let i = 0; i < count; i++) {
-        prog[i] += spd[i]
-        if (prog[i] > 1) prog[i] = 0
-        const t = prog[i]
-        a[i * 3] = link.source.x + (link.target.x - link.source.x) * t
-        a[i * 3 + 1] = link.source.y + (link.target.y - link.source.y) * t
-        a[i * 3 + 2] = link.source.z + (link.target.z - link.source.z) * t
-      }
-      points.geometry.attributes.position.needsUpdate = true
+  // 箭头标记
+  defs.append('marker')
+    .attr('id', 'arrow-d3')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 28)
+    .attr('refY', 0)
+    .attr('markerWidth', 6)
+    .attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M0 -5L10 0L0 5')
+    .attr('fill', 'var(--color-border)')
+
+  // ---- 连线 ----
+  const linkGroup = zoomGroup.append('g').attr('class', 'links')
+  const linkPaths = linkGroup.selectAll('path')
+    .data(links)
+    .join('path')
+    .attr('class', 'link-line')
+    .attr('marker-end', 'url(#arrow-d3)')
+
+  // 连线标签
+  const linkLabelGroup = zoomGroup.append('g').attr('class', 'link-labels')
+  const linkLabels = linkLabelGroup.selectAll('text')
+    .data(links.filter((l: any) => l.label))
+    .join('text')
+    .attr('class', 'link-label')
+    .attr('text-anchor', 'middle')
+    .attr('dy', -6)
+    .text((d: any) => d.label!)
+
+  // ---- 粒子连线 ----
+  const particleGroup = zoomGroup.append('g').attr('class', 'particles')
+
+  // 为每条边创建粒子
+  const particles: { element: d3.Selection<SVGCircleElement, unknown, null, undefined>; progress: number; speed: number }[] = []
+  links.forEach(() => {
+    const p = particleGroup.append('circle')
+      .attr('r', 2.5)
+      .attr('fill', '#c9a84c')
+      .attr('opacity', 0.7)
+    particles.push({
+      element: p,
+      progress: Math.random(),
+      speed: 0.002 + Math.random() * 0.003,
     })
   })
 
-  // ── Nodes ──
-  nodes.forEach(n => {
-    const color = parseInt(nodeColors[n.type]?.replace('#', '') || '6B7280', 16)
-    const r = n.label.length > 8 ? 0.7 : n.label.length > 4 ? 0.9 : 1.1
-    const geo = new THREE.SphereGeometry(r, 32, 32)
-    const mat = new THREE.MeshPhongMaterial({
-      color, emissive: color, emissiveIntensity: 0.15, transparent: true, opacity: 0.92,
-    })
-    const mesh = new THREE.Mesh(geo, mat)
-    mesh.position.set(n.x, n.y, n.z)
-    mesh.userData = { id: n.id, link: n.link, search: n.search, label: n.label }
-    scene.add(mesh)
-    nodeMeshes.push(mesh)
-
-    // ── Label sprite ──
-    const canvas = document.createElement('canvas')
-    canvas.width = 512
-    canvas.height = 96
-    const ctx = canvas.getContext('2d')!
-    ctx.font = 'bold 32px "Noto Serif SC", "Microsoft YaHei", serif'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-
-    const label = n.label.replace('\\n', '\n')
-    const lines = label.split('\n')
-    const lineH = 38
-    const startY = (canvas.height - lines.length * lineH) / 2 + lineH / 2
-
-    lines.forEach((line, i) => {
-      const y = startY + i * lineH
-      ctx.strokeStyle = 'rgba(0,0,0,0.35)'
-      ctx.lineWidth = 4
-      ctx.strokeText(line, 256, y)
-      ctx.fillStyle = '#ffffff'
-      ctx.fillText(line, 256, y)
-    })
-
-    const tex = new THREE.CanvasTexture(canvas)
-    tex.needsUpdate = true
-    const sm = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false })
-    const sprite = new THREE.Sprite(sm)
-    sprite.position.set(n.x, n.y - r - 0.9, n.z)
-    sprite.scale.set(5, 5 * (canvas.height / canvas.width), 1)
-    scene.add(sprite)
-  })
-}
-
-function onPointerMove(e: PointerEvent) {
-  if (!renderer) return
-  const rect = renderer.domElement.getBoundingClientRect()
-  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
-
-  raycaster.setFromCamera(mouse, camera)
-  const hits = raycaster.intersectObjects(nodeMeshes)
-
-  nodeMeshes.forEach(m => {
-    const mat = m.material as THREE.MeshPhongMaterial
-    mat.emissiveIntensity = 0.15
-    mat.opacity = 0.92
-  })
-  linkLines.forEach(l => { (l.material as THREE.LineBasicMaterial).opacity = 0.3 })
-
-  if (hits.length > 0) {
-    const d = hits[0].object.userData as any
-    tooltipText.value = d.label
-    tooltipPos.value = { x: e.clientX, y: e.clientY - 40 }
-    tooltipVisible.value = true
-    renderer.domElement.style.cursor = 'pointer'
-
-    const hitId = d.id
-    nodeMeshes.forEach(m => {
-      if (m.userData.id === hitId) {
-        const mat = m.material as THREE.MeshPhongMaterial
-        mat.emissiveIntensity = 0.6
-        mat.opacity = 1
+  // 粒子动画
+  function animateParticles() {
+    particles.forEach((p, i) => {
+      p.progress += p.speed
+      if (p.progress > 1) p.progress = 0
+      const link = links[i]
+      const s = typeof link.source === 'object' ? link.source : nodes.find(n => n.id === link.source)
+      const t = typeof link.target === 'object' ? link.target : nodes.find(n => n.id === link.target)
+      if (s && t && 'x' in s && 'y' in t) {
+        const x = (s as any).x + ((t as any).x - (s as any).x) * p.progress
+        const y = (s as any).y + ((t as any).y - (s as any).y) * p.progress
+        p.element.attr('cx', x).attr('cy', y)
       }
     })
-  } else {
-    tooltipVisible.value = false
-    renderer.domElement.style.cursor = 'grab'
+    particleInterval = requestAnimationFrame(animateParticles)
   }
-}
+  animateParticles()
 
-function onClick() {
-  if (!renderer) return
-  raycaster.setFromCamera(mouse, camera)
-  const hits = raycaster.intersectObjects(nodeMeshes)
-  if (hits.length > 0) {
-    const d = hits[0].object.userData as any
-    if (d.link) router.push(d.link)
-    else if (d.search) router.push({ path: '/archive', query: { search: d.search } })
+  // ---- 节点 ----
+  const nodeGroup = zoomGroup.append('g').attr('class', 'nodes')
+
+  // 计算每个节点的半径：基于最长行字数
+  function nodeRadius(d: typeof nodes[0]): number {
+    const lines = d.label.split('\\n')
+    const maxLen = Math.max(...lines.map((l: any) => (l as string).length))
+    return Math.max(18, Math.min(38, 12 + maxLen * 4.5))
   }
+
+  function nodeFontSize(d: typeof nodes[0]): number {
+    const lines = d.label.split('\\n')
+    const maxLen = Math.max(...lines.map((l: any) => (l as string).length))
+    if (maxLen <= 3) return 0.75
+    if (maxLen <= 5) return 0.65
+    return 0.55
+  }
+
+  const nodeCircles = nodeGroup.selectAll('circle')
+    .data(nodes)
+    .join('circle')
+    .attr('r', (d: any) => nodeRadius(d))
+    .attr('fill', (d: any) => nodeColors[d.type])
+    .attr('opacity', 0.9)
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 2)
+    .style('cursor', 'pointer')
+
+  // 节点光晕（hover 时显示）
+  const nodeGlow = nodeGroup.selectAll('circle.glow')
+    .data(nodes)
+    .join('circle')
+    .attr('class', 'glow')
+    .attr('r', (d: any) => nodeRadius(d) + 8)
+    .attr('fill', (d: any) => nodeColors[d.type])
+    .attr('opacity', 0)
+    .attr('pointer-events', 'none')
+
+  // 节点标签
+  const nodeLabels = nodeGroup.selectAll('text')
+    .data(nodes)
+    .join('text')
+    .attr('class', 'node-label-d3')
+    .attr('text-anchor', 'middle')
+    .attr('dominant-baseline', 'middle')
+    .style('pointer-events', 'none')
+    .style('user-select', 'none')
+    .style('font-size', (d: any) => `${nodeFontSize(d)}rem`)
+    .style('font-weight', '600')
+    .text((d: any) => d.label)
+
+  // 处理换行标签 + 文字描边使其在节点内清晰
+  nodeLabels.each(function (d: any) {
+    const el = d3.select(this as SVGElement)
+    const lines = d.label.split('\\n')
+    if (lines.length > 1) {
+      el.text('')
+      const lineH = nodeFontSize(d) <= 0.6 ? 10 : 12
+      lines.forEach((line: string, i: number) => {
+        el.append('tspan')
+          .attr('x', 0)
+          .attr('dy', i === 0 ? 0 : lineH)
+          .text(line)
+      })
+    }
+  })
+
+  // ---- 交互 ----
+  nodeCircles
+    .on('mouseenter', function (_: any, d: any) {
+      hoveredId.value = d.id
+      nodeCircles.attr('opacity', (n: any) => !hoveredId.value || hoveredId.value === n.id || isConnected(n.id, hoveredId.value!) ? 0.9 : 0.15)
+      nodeLabels.attr('opacity', (n: any) => !hoveredId.value || hoveredId.value === n.id || isConnected(n.id, hoveredId.value!) ? 1 : 0.15)
+      nodeGlow.attr('opacity', (n: any) => n.id === d.id ? 0.15 : 0)
+      linkPaths.attr('opacity', (l: any) => !hoveredId.value || l.source === hoveredId.value || l.target === hoveredId.value || 
+        (typeof l.source === 'object' && l.source.id === hoveredId.value) ||
+        (typeof l.target === 'object' && l.target.id === hoveredId.value) ? 1 : 0.08)
+        .attr('stroke', (l: any) => hoveredId.value && (l.source === hoveredId.value || l.target === hoveredId.value || 
+          (typeof l.source === 'object' && l.source.id === hoveredId.value) ||
+          (typeof l.target === 'object' && l.target.id === hoveredId.value)) ? nodeColors[nodes.find((n: any) => n.id === hoveredId.value)?.type || 'concept'] : null)
+      linkLabels.attr('opacity', (l: any) => !hoveredId.value || 
+        l.source === hoveredId.value || l.target === hoveredId.value ||
+        (typeof l.source === 'object' && l.source.id === hoveredId.value) ||
+        (typeof l.target === 'object' && l.target.id === hoveredId.value) ? 1 : 0.08)
+    })
+    .on('mouseleave', () => {
+      hoveredId.value = null
+      nodeCircles.attr('opacity', 0.9)
+      nodeLabels.attr('opacity', 1)
+      nodeGlow.attr('opacity', 0)
+      linkPaths.attr('opacity', 1).attr('stroke', null)
+      linkLabels.attr('opacity', 1)
+    })
+    .on('click', (_: any, d: any) => {
+      if (d.link) router.push(d.link)
+      else if (d.search) router.push({ path: '/archive', query: { search: d.search } })
+    })
+
+  // ---- 力导向模拟 ----
+  simulation = d3.forceSimulation(nodes as any)
+    .force('link', d3.forceLink(links).id((d: any) => d.id).distance(80).strength(0.3))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(w / 2, h / 2))
+    .force('collide', d3.forceCollide().radius((d: any) => nodeRadius(d) + 8))
+    .alphaDecay(0.05)
+    .on('tick', () => {
+      // 更新连线路径
+      linkPaths.attr('d', (d: any) => {
+        if (!d.source || !d.target) return ''
+        const s = d.source
+        const t = d.target
+        const dx = t.x - s.x
+        const dy = t.y - s.y
+        const cx1 = s.x + dx * 0.4
+        const cy1 = s.y + dy * 0.1
+        const cx2 = s.x + dx * 0.6
+        const cy2 = s.y + dy * 0.9
+        return `M${s.x},${s.y} C${cx1},${cy1} ${cx2},${cy2} ${t.x},${t.y}`
+      })
+
+      // 更新连线标签位置
+      linkLabels.attr('x', (d: any) => (d.source.x + d.target.x) / 2)
+        .attr('y', (d: any) => (d.source.y + d.target.y) / 2)
+
+      // 更新节点位置
+      nodeCircles.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y)
+      nodeGlow.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y)
+      nodeLabels.attr('x', (d: any) => d.x).attr('y', (d: any) => d.y)
+    })
+
+  // ---- 缩放 & 平移（背景拖拽 / 手机双指） ----
+  let zoomTransform = d3.zoomIdentity
+
+  const zoom = d3.zoom<SVGSVGElement, unknown>()
+    .scaleExtent([0.3, 3])
+    .filter((event: any) => !event.button) // 仅左键和触摸拖拽
+    .on('zoom', (event: any) => {
+      zoomTransform = event.transform
+      zoomGroup.attr('transform', zoomTransform.toString())
+      // 拖拽时切换光标
+      svg.style('cursor', event.sourceEvent?.type === 'mousemove' ? 'grabbing' : 'grab')
+    })
+
+  svg.call(zoom)
+
+  // ---- 拖拽节点（坐标已适配缩放） ----
+  const drag = d3.drag<SVGCircleElement, any>()
+    .on('start', (event: any, d: any) => {
+      if (!event.active) simulation?.alphaTarget(0.3).restart()
+      d.fx = d.x
+      d.fy = d.y
+    })
+    .on('drag', (event: any, d: any) => {
+      d.fx = (event.x - zoomTransform.x) / zoomTransform.k
+      d.fy = (event.y - zoomTransform.y) / zoomTransform.k
+    })
+    .on('end', (event: any, d: any) => {
+      if (!event.active) simulation?.alphaTarget(0)
+      d.fx = null
+      d.fy = null
+    })
+
+  nodeCircles.call(drag as any)
 }
 
-function onResize() {
-  if (!containerRef.value || !renderer) return
-  const w = containerRef.value.clientWidth
-  const h = containerRef.value.clientHeight
-  camera.aspect = w / h
-  camera.updateProjectionMatrix()
-  renderer.setSize(w, h)
+function isConnected(nodeId: string, targetId: string): boolean {
+  return edgeData.some(e =>
+    (e.source === targetId && e.target === nodeId) ||
+    (e.target === targetId && e.source === nodeId)
+  )
 }
-
-function animate() {
-  frameId = requestAnimationFrame(animate)
-  controls.update()
-  particleUpdates.forEach(fn => fn())
-  renderer.render(scene, camera)
-}
-
-onMounted(() => { if (containerRef.value) initThree() })
-onUnmounted(() => {
-  cancelAnimationFrame(frameId)
-  controls?.dispose()
-  renderer?.dispose()
-  renderer?.domElement?.remove()
-  window.removeEventListener('resize', onResize)
-})
 </script>
 
 <template>
-  <section class="graph-section-3d">
+  <section class="graph-section">
     <h2 class="graph-title">校史知识图谱</h2>
-    <p class="graph-subtitle">拖拽旋转 · 滚轮缩放 · 自动旋转 · 悬停查看 · 点击跳转</p>
+    <p class="graph-subtitle">拖拽背景平移 · 双指缩放 · 拖拽节点 · 悬停查看关联 · 点击跳转</p>
 
-    <div ref="containerRef" class="graph-container-3d">
-      <div class="graph-legend">
-        <span class="legend-dot" style="background: #EC4899" /> 团队
-        <span class="legend-dot" style="background: #3B82F6" /> 机构
-        <span class="legend-dot" style="background: #F59E0B" /> 事件
-        <span class="legend-dot" style="background: #10B981" /> 人物
-        <span class="legend-dot" style="background: #8B5CF6" /> 地点
-        <span class="legend-dot" style="background: #6B7280" /> 概念
-        | <span class="legend-dot" style="background: #c9a84c" /> 粒子流
-        | <span class="legend-dot" style="background: transparent; border: 2px solid #c9a84c;" /> 自动旋转
+    <div ref="containerRef" class="graph-container">
+      <div class="graph-hint">
+        <span class="hint-dot" style="background: #3B82F6" /> 机构
+        <span class="hint-dot" style="background: #F59E0B" /> 事件
+        <span class="hint-dot" style="background: #10B981" /> 人物
+        <span class="hint-dot" style="background: #8B5CF6" /> 地点
+        <span class="hint-dot" style="background: #6B7280" /> 概念
+        <span class="hint-sep">|</span>
+        <span class="hint-dot" style="background: #c9a84c" /> 粒子流动
       </div>
     </div>
-
-    <transition name="fade">
-      <div v-if="tooltipVisible" class="graph-tooltip" :style="{ left: tooltipPos.x + 'px', top: tooltipPos.y + 'px' }">
-        {{ tooltipText }}
-      </div>
-    </transition>
   </section>
 </template>
 
 <style scoped>
-.graph-section-3d {
-  max-width: 960px;
+.graph-section {
+  max-width: 900px;
   margin: var(--space-3xl) auto;
   padding: 0 var(--space-lg);
 }
+
 .graph-title {
   font-size: 1.3rem;
   color: var(--color-primary-dark);
   text-align: center;
   margin-bottom: var(--space-xs);
 }
+
 .graph-subtitle {
   font-family: var(--font-sans);
   font-size: 0.85rem;
@@ -295,24 +367,59 @@ onUnmounted(() => {
   text-align: center;
   margin-bottom: var(--space-lg);
 }
-.graph-container-3d {
+
+.graph-container {
   position: relative;
   width: 100%;
-  height: 560px;
-  background: #f5f0e8;
-  background-image:
-    radial-gradient(circle at 20% 50%, rgba(201,168,76,0.06) 0%, transparent 50%),
-    radial-gradient(circle at 80% 50%, rgba(59,130,246,0.06) 0%, transparent 50%);
+  height: 520px;
+  background: var(--color-bg-alt);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border-light);
   overflow: hidden;
   touch-action: none;
-  cursor: grab;
 }
-.graph-container-3d:active { cursor: grabbing; }
-.graph-container-3d :deep(canvas) { display: block; width: 100% !important; height: 100% !important; }
 
-.graph-legend {
+.graph-container :deep(.graph-svg) {
+  width: 100%;
+  height: 100%;
+}
+
+.graph-container :deep(.link-line) {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 1.5;
+  transition: stroke var(--transition-fast), opacity var(--transition-fast);
+}
+
+.graph-container :deep(.link-label) {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 700;
+  fill: var(--color-text-secondary);
+  pointer-events: none;
+  user-select: none;
+  transition: opacity var(--transition-fast);
+}
+
+.graph-container :deep(.node-label-d3) {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  fill: #fff;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+  paint-order: stroke;
+  stroke: rgba(0,0,0,0.3);
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.graph-container :deep(.glow) {
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+}
+
+/* ===== 图例 ===== */
+.graph-hint {
   position: absolute;
   bottom: var(--space-md);
   left: 50%;
@@ -321,39 +428,28 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--space-sm);
   font-family: var(--font-sans);
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  background: rgba(255,255,255,0.88);
+  font-size: 0.65rem;
+  color: var(--color-text-light);
+  background: rgba(255,255,255,0.85);
   padding: var(--space-xs) var(--space-md);
-  border-radius: var(--radius-pill);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(4px);
+  border-radius: 20px;
   white-space: nowrap;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.legend-dot {
-  display: inline-block; width: 10px; height: 10px;
-  border-radius: 50%; vertical-align: middle;
-}
-
-.graph-tooltip {
-  position: fixed;
-  background: rgba(0,0,0,0.75);
-  color: #fff;
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  padding: 4px 12px;
-  border-radius: var(--radius-pill);
   pointer-events: none;
-  z-index: 1000;
-  white-space: nowrap;
-  transform: translateX(-50%);
+  z-index: 10;
 }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.15s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
 
-@media (max-width: 768px) {
-  .graph-container-3d { height: 400px; }
+.hint-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hint-sep { color: var(--color-border); }
+
+@media (max-width: 640px) {
+  .graph-container { height: 400px; }
+  .graph-hint { font-size: 0.55rem; gap: 4px; padding: 2px 10px; }
 }
 </style>
