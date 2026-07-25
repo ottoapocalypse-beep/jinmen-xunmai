@@ -9,17 +9,20 @@ let map: L.Map | null = null
 onMounted(() => {
   if (!mapContainer.value) return
 
-  // 创建 Leaflet 地图 (CRS.Simple = 像素坐标系)
+  // 创建 Leaflet 地图
   map = L.map(mapContainer.value, {
     crs: L.CRS.Simple,
-    zoomSnap: 0.5,
-    wheelPxPerZoomLevel: 120,
     zoomControl: true,
     attributionControl: false,
+    minZoom: -2,
+    maxZoom: 2,
+    zoomSnap: 0.5,
   })
 
-  // 使用拼接好的全景校园地图
-  const imageBounds: L.LatLngBoundsExpression = [[0, 0], [2304, 2304]]
+  // 使用 zoom4 拼接全景校园地图 (4096×5888)
+  const W = 4096
+  const H = 5888
+  const imageBounds: L.LatLngBoundsExpression = [[0, 0], [H, W]]
   const overlay = L.imageOverlay('/jinmen-xunmai/campus_map.jpg', imageBounds)
   overlay.addTo(map)
   map.fitBounds(imageBounds)
