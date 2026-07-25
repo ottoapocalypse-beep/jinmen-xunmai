@@ -46,7 +46,6 @@ const sorted = [...activities].sort((a, b) => b.date.localeCompare(a.date))
         <div v-if="idx % 2 === 0" class="tl-card tl-card-left">
           <div class="tl-card-inner">
             <div class="tl-meta">
-              <time class="tl-date">{{ act.date }}</time>
               <span v-if="act.active" class="tl-badge">进行中</span>
             </div>
             <h3 class="tl-title">{{ act.title }}</h3>
@@ -60,18 +59,18 @@ const sorted = [...activities].sort((a, b) => b.date.localeCompare(a.date))
           </div>
         </div>
 
-        <!-- 中心圆点 -->
+        <!-- 中心圆点 + 日期 -->
         <div class="tl-center">
           <div class="tl-dot" :style="{ background: laneColors[getLaneId(act.tags)] }">
             <div v-if="act.active" class="tl-pulse" />
           </div>
+          <time class="tl-axis-date">{{ act.date }}</time>
         </div>
 
         <!-- 右侧卡片 -->
         <div v-if="idx % 2 !== 0" class="tl-card tl-card-right">
           <div class="tl-card-inner">
             <div class="tl-meta">
-              <time class="tl-date">{{ act.date }}</time>
               <span v-if="act.active" class="tl-badge">进行中</span>
             </div>
             <h3 class="tl-title">{{ act.title }}</h3>
@@ -150,6 +149,17 @@ const sorted = [...activities].sort((a, b) => b.date.localeCompare(a.date))
   border: 3px solid var(--color-bg);
   box-shadow: 0 0 0 2px var(--color-border);
   position: relative;
+}
+
+.tl-axis-date {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  color: var(--color-text-light);
+  font-weight: 500;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .tl-item.active .tl-dot {
@@ -403,6 +413,10 @@ const sorted = [...activities].sort((a, b) => b.date.localeCompare(a.date))
 
   .tl-summary {
     font-size: 0.8rem;
+  }
+
+  .tl-axis-date {
+    font-size: 0.6rem;
   }
 }
 </style>
