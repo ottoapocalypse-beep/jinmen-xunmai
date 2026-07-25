@@ -14,15 +14,15 @@ onMounted(() => {
     crs: L.CRS.Simple,
     zoomControl: true,
     attributionControl: false,
-    minZoom: -2,
-    maxZoom: 2,
+    minZoom: -3,
+    maxZoom: 1,
     zoomSnap: 0.5,
+    maxBoundsViscosity: 1,
   })
 
-  // 使用 zoom4 拼接全景校园地图 (4096×5888)
-  const W = 4096
-  const H = 5888
-  const imageBounds: L.LatLngBoundsExpression = [[0, 0], [H, W]]
+  // zoom4 校园地图 (3072×3072)
+  const MAP_SIZE = 3072
+  const imageBounds: L.LatLngBoundsExpression = [[0, 0], [MAP_SIZE, MAP_SIZE]]
   const overlay = L.imageOverlay('/jinmen-xunmai/campus_map.jpg', imageBounds)
   overlay.addTo(map)
   map.fitBounds(imageBounds)
