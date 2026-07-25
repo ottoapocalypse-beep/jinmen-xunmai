@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { archiveItems } from '@/data/archive'
 import NavIcon from '@/components/NavIcon.vue'
@@ -8,6 +8,8 @@ const route = useRoute()
 const router = useRouter()
 
 const article = computed(() => archiveItems.find(i => i.id === route.params.id))
+const modalImg = ref<string | null>(null)
+function openModal(img: string) { modalImg.value = img }
 
 const categoryLabel: Record<string, string> = {
   institution: '机构', event: '事件', person: '人物',
@@ -48,6 +50,10 @@ function renderContent(text: string): string {
     // 没匹配到则保留原文
     return `<span class="archive-link-missing">${name}</span>`
   })
+  // Markdown 图片 ![alt](src)
+  html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="photo-ocr-img" loading="lazy" />')
+  // Markdown 块引用 > text
+  html = html.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
   // Markdown 样式
   html = html
     .replace(/^### (.*$)/gm, '<h3>$1</h3>')
@@ -88,10 +94,25 @@ function renderContent(text: string): string {
         <div v-if="article.source" class="detail-source">来源：{{ article.source }}</div>
       </header>
 
+      <!-- 老照片图片展示 -->
+      <div v-if="article.category === 'photo' && article.images && article.images.length" class="photo-gallery">
+        <h3 class="gallery-title">📷 校史照片</h3>
+        <div class="gallery-grid">
+          <div v-for="(img, idx) in article.images" :key="idx" class="gallery-item">
+            <img :src="img" :alt="`${article.title} - ${idx + 1}`" class="gallery-img" loading="lazy" @click="openModal(img)" />
+          </div>
+        </div>
+        <!-- 图片查看模态框 -->
+        <div v-if="modalImg" class="modal-overlay" @click="modalImg = null">
+          <img :src="modalImg" class="modal-img" @click.stop />
+          <button class="modal-close" @click="modalImg = null">✕</button>
+        </div>
+      </div>
+
       <div v-if="article.content" class="detail-body">
         <div class="detail-content" v-html="renderContent(article.content)" />
       </div>
-      <div v-else class="detail-body-empty">
+      <div v-else-if="article.category !== 'photo'" class="detail-body-empty">
         <p>本条档案的完整正文正在完善中。</p>
       </div>
 
@@ -284,6 +305,28 @@ function renderContent(text: string): string {
   font-weight: 600;
 }
 
+.detail-body :deep(.photo-ocr-img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: var(--space-md) auto;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+}
+
+.detail-body :deep(blockquote) {
+  margin: var(--space-sm) 0 var(--space-md) var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
+  border-left: 3px solid var(--color-gold);
+  background: var(--color-bg-alt);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  text-indent: 0;
+}
+
 .detail-body :deep(.archive-link) {
   color: var(--color-gold-dark);
   text-decoration: underline;
@@ -308,6 +351,87 @@ function renderContent(text: string): string {
 .detail-footer {
   padding: var(--space-md) var(--space-lg);
   border-top: 1px solid var(--color-border-light);
+}
+
+/* ===== 老照片画廊 ===== */
+.photo-gallery {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.gallery-title {
+  font-size: 1rem;
+  color: var(--color-primary-dark);
+  margin-bottom: var(--space-md);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-sm);
+}
+
+.gallery-item {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+  aspect-ratio: 4/3;
+}
+
+.gallery-item:hover {
+  transform: scale(1.03);
+}
+
+.gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ===== 图片模态框 ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-md);
+  cursor: pointer;
+}
+
+.modal-img {
+  max-width: 95vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  cursor: default;
+}
+
+.modal-close {
+  position: fixed;
+  top: var(--space-md);
+  right: var(--space-md);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+
+.modal-close:hover {
+  background: rgba(255,255,255,0.3);
 }
 
 @media (max-width: 768px) {
