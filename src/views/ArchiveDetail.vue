@@ -12,13 +12,13 @@ const article = computed(() => archiveItems.find(i => i.id === route.params.id))
 const categoryLabel: Record<string, string> = {
   institution: '机构', event: '事件', person: '人物',
   concept: '概念', document: '文件', photo: '老照片',
-  manuscript: '手稿', other: '其他',
+  'manuscript-ustb': '手稿·北科', 'manuscript-tju': '手稿·天大', manuscript: '手稿', other: '其他',
 }
 
 const categoryIcon: Record<string, string> = {
   institution: '🏛', event: '📅', person: '👤',
   concept: '📖', document: '📄', photo: '🖼',
-  manuscript: '✍️', other: '📎',
+  'manuscript-ustb': '🏛', 'manuscript-tju': '🏛', manuscript: '✍️', other: '📎',
 }
 
 // 标题 → ID 映射（用于 [[关联条目]] 跳转）

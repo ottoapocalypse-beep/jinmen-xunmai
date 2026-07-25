@@ -5,7 +5,7 @@
 export interface ArchiveItem {
   id: string
   title: string
-  category: 'photo' | 'manuscript' | 'document' | 'other' | 'person' | 'event' | 'institution' | 'concept'
+  category: 'photo' | 'manuscript-ustb' | 'manuscript-tju' | 'document' | 'other' | 'person' | 'event' | 'institution' | 'concept'
   date?: string
   description: string
   /** 完整文章正文 */

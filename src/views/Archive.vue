@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { archiveItems } from '@/data/archive'
 import { nodes as kgNodes, edges as kgEdges, nodeColors } from '@/data/knowledgeGraph'
@@ -21,15 +21,34 @@ const categories = [
   { key: 'concept', label: '概念' },
   { key: 'document', label: '文件' },
   { key: 'photo', label: '老照片' },
-  { key: 'manuscript', label: '手稿' },
+  { key: 'manuscript-ustb', label: '手稿·北科' },
+  { key: 'manuscript-tju', label: '手稿·天大' },
   { key: 'other', label: '其他' },
 ]
 
 onMounted(() => {
+  // 从 sessionStorage 恢复筛选状态
+  const saved = sessionStorage.getItem('archive_filter')
+  if (saved) {
+    try {
+      const { category, search } = JSON.parse(saved)
+      if (category && categories.some(c => c.key === category)) activeCategory.value = category
+      if (search) searchQuery.value = search
+    } catch {}
+  }
+  // query 参数覆盖
   if (route.query.search) searchQuery.value = route.query.search as string
   if (route.query.category && categories.some(c => c.key === route.query.category)) {
     activeCategory.value = route.query.category as string
   }
+})
+
+// 离开存档页面前保存筛选状态
+onBeforeUnmount(() => {
+  sessionStorage.setItem('archive_filter', JSON.stringify({
+    category: activeCategory.value,
+    search: searchQuery.value,
+  }))
 })
 
 const filteredItems = computed(() => {
@@ -312,7 +331,7 @@ const typeColor: Record<string, string> = nodeColors
         <div v-for="item in filteredItems" :key="item.id" class="floating-card" @click="router.push('/archive/' + item.id)">
           <div class="card-title">{{ item.title }}</div>
           <div class="card-subtitle">
-            <span class="tag">{{ ({ photo: '老照片', manuscript: '手稿', document: '文件', other: '其他', person: '人物', event: '事件', institution: '机构', concept: '概念' } as any)[item.category] }}</span>
+            <span class="tag">{{ ({ photo: '老照片', 'manuscript-ustb': '手稿·北科', 'manuscript-tju': '手稿·天大', document: '文件', other: '其他', person: '人物', event: '事件', institution: '机构', concept: '概念' } as any)[item.category] }}</span>
             <span v-if="item.date" class="card-date">{{ item.date }}</span>
           </div>
           <div class="card-body">{{ item.description }}</div>
