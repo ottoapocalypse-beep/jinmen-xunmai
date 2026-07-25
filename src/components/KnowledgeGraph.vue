@@ -53,9 +53,14 @@ function initGraph() {
   const w = dims.value.w
   const h = dims.value.h
 
-  // 准备 D3 数据（深拷贝）
-  const nodes = nodeData.map((n: any) => ({ ...n, x: (n.x / 100) * w, y: (n.y / 100) * h }))
-  const links = edgeData.map((e: any) => ({
+  // 准备 D3 数据（深拷贝）- 首页隐藏人物节点
+  const personIds = new Set(nodeData.filter((n: any) => n.type === 'person').map((n: any) => n.id))
+  const nodes = nodeData
+    .filter((n: any) => n.type !== 'person')
+    .map((n: any) => ({ ...n, x: (n.x / 100) * w, y: (n.y / 100) * h }))
+  const links = edgeData
+    .filter((e: any) => !personIds.has(e.source) && !personIds.has(e.target))
+    .map((e: any) => ({
     source: e.source,
     target: e.target,
     label: e.label,
@@ -289,7 +294,12 @@ function initGraph() {
 
   const zoom = d3.zoom<SVGSVGElement, unknown>()
     .scaleExtent([0.3, 3])
-    .filter((event: any) => !event.button) // 仅左键和触摸拖拽
+    .filter((event: any) => {
+      // 排除节点拖拽事件，避免与 zoom 冲突
+      const target = event.target as HTMLElement
+      if (target?.closest?.('.nodes') || target?.classList?.contains('node-label-d3')) return false
+      return !event.button
+    })
     .on('zoom', (event: any) => {
       zoomTransform = event.transform
       zoomGroup.attr('transform', zoomTransform.toString())

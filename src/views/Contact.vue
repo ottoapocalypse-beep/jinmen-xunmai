@@ -5,6 +5,7 @@ import NavIcon from '@/components/NavIcon.vue'
 
 const platforms = [
   { name: '微信公众号', icon: 'wechat', account: siteConfig.social.wechat, link: siteConfig.socialLinks.wechat },
+  { name: '微信视频号', icon: 'video', account: siteConfig.social.video, link: siteConfig.socialLinks.video },
   { name: 'B站', icon: 'video', account: siteConfig.social.bilibili, link: siteConfig.socialLinks.bilibili },
   { name: '抖音', icon: 'music', account: siteConfig.social.douyin, link: siteConfig.socialLinks.douyin },
   { name: '快手', icon: 'music', account: siteConfig.social.kuaishou, link: siteConfig.socialLinks.kuaishou },

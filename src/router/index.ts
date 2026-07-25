@@ -58,8 +58,7 @@ const router = createRouter({
     {
       path: '/oral-history',
       name: 'oralHistory',
-      component: () => import('@/views/OralHistory.vue'),
-      meta: { title: '口述史', titleEn: 'Oral History' },
+      redirect: '/archive',
     },
     {
       path: '/map',
