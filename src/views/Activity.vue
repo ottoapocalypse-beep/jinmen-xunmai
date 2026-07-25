@@ -16,8 +16,8 @@ const laneColors: Record<string, string> = {
   promotion: '#F59E0B', dev: '#EC4899', team: '#6B7280',
 }
 
-// 按文件顺序展示（序1开始）
-const activitiesList = activities
+// 按日期倒序排列
+const sorted = [...activities].sort((a, b) => b.date.localeCompare(a.date))
 </script>
 
 <template>
@@ -28,7 +28,7 @@ const activitiesList = activities
       <p>实时记录津门寻脉小队的实践足迹</p>
     </div>
 
-    <div v-if="activitiesList.length === 0" class="empty-state">
+    <div v-if="sorted.length === 0" class="empty-state">
       <div class="empty-icon"><NavIcon name="empty" :size="48" /></div>
       <div class="empty-text">暂无内容，敬请期待</div>
     </div>
@@ -38,7 +38,7 @@ const activitiesList = activities
       <div class="tl-axis" />
 
       <div
-        v-for="(act, idx) in activitiesList"
+        v-for="(act, idx) in sorted"
         :key="act.id"
         :class="['tl-item', { active: act.active, left: idx % 2 === 0, right: idx % 2 !== 0 }]"
       >
@@ -65,7 +65,6 @@ const activitiesList = activities
             <div v-if="act.active" class="tl-pulse" />
           </div>
           <time class="tl-axis-date">{{ act.date }}</time>
-          <span v-if="act.startDate" class="tl-axis-start">始{{ act.startDate }}</span>
         </div>
 
         <!-- 右侧卡片 -->
@@ -159,16 +158,6 @@ const activitiesList = activities
   font-size: 0.7rem;
   color: var(--color-text-light);
   font-weight: 500;
-  white-space: nowrap;
-  text-align: center;
-}
-
-.tl-axis-start {
-  display: block;
-  font-family: var(--font-sans);
-  font-size: 0.55rem;
-  color: var(--color-text-light);
-  opacity: 0.6;
   white-space: nowrap;
   text-align: center;
 }
@@ -428,10 +417,6 @@ const activitiesList = activities
 
   .tl-axis-date {
     font-size: 0.6rem;
-  }
-
-  .tl-axis-start {
-    font-size: 0.5rem;
   }
 }
 </style>
