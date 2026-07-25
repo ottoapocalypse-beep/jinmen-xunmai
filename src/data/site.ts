@@ -18,6 +18,12 @@ export const siteConfig = {
     kuaishou: '津门寻脉',
     xiaohongshu: '津门寻脉',
   },
+  // 成员职责
+  teamRoles: {
+    leaders: '张雅童（副队长）、赵望成（副队长）',
+    promotion: '李雨桐（宣传组）',
+    copywriting: '马立菲（文案组）',
+  },
   // 社交媒体链接
   socialLinks: {
     wechat: 'https://mp.weixin.qq.com/s/HzjxSXjgTGitKw4I5pmZrA',

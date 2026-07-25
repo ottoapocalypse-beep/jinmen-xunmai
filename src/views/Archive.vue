@@ -80,6 +80,7 @@ let controls: OrbitControls | null = null
 let animId: number | null = null
 let nodeMeshes: THREE.Mesh[] = []
 let edgeLines: THREE.Line[] = []
+let labelSprites: THREE.Sprite[] = []
 
 function getColor(type: string): number {
   return new THREE.Color(nodeColors[type] || '#6B7280').getHex()
@@ -165,7 +166,9 @@ function initGraph() {
     const sprite = new THREE.Sprite(spriteMat)
     sprite.scale.set(70, 32, 1)
     sprite.position.set(x, y - 16, z)
+    sprite.userData = { id: d.id, label: d.label.replace('\\n', ' '), type: d.type }
     scene!.add(sprite)
+    labelSprites.push(sprite)
   })
 
   // 连线
@@ -199,7 +202,8 @@ function initGraph() {
     pointer.x = ((event.clientX - r.left) / r.width) * 2 - 1
     pointer.y = -((event.clientY - r.top) / r.height) * 2 + 1
     raycaster.setFromCamera(pointer, camera!)
-    const hits = raycaster.intersectObjects(nodeMeshes)
+    const allClickables = [...nodeMeshes, ...labelSprites]
+    const hits = raycaster.intersectObjects(allClickables)
     if (hits.length > 0) {
       const data = hits[0].object.userData as { id: string; label: string; type: string }
       selectedNode.value = data
@@ -240,7 +244,7 @@ function cleanupGraph() {
   renderer?.dispose()
   scene?.clear()
   if (renderer && containerRef.value) containerRef.value.removeChild(renderer.domElement)
-  nodeMeshes = []; edgeLines = []
+  nodeMeshes = []; edgeLines = []; labelSprites = []
 }
 
 function switchMode(mode: 'list' | 'graph') {

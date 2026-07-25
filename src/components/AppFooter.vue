@@ -3,6 +3,7 @@ import { siteConfig } from '@/data/site'
 
 const socialLinks = [
   { name: '微信公众号', link: siteConfig.socialLinks.wechat },
+  { name: '微信视频号', link: siteConfig.socialLinks.video },
   { name: 'B站', link: siteConfig.socialLinks.bilibili },
   { name: '抖音', link: siteConfig.socialLinks.douyin },
   { name: '快手', link: siteConfig.socialLinks.kuaishou },
