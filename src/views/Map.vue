@@ -7,16 +7,8 @@ import { archiveItems } from '@/data/archive'
 const mapContainer = ref<HTMLElement | null>(null)
 let map: L.Map | null = null
 
-// ---- 瓦片映射 ----
-// 我们的瓦片: zoom3 (最高清晰度), x=8-16, y=20-28 (9×9 网格)
-// Leaflet CRS.Simple: 瓦片(0,0) 映射到我们的 (8,20)
-const TILE_SIZE = 256
-const X_OFFSET = 8
-const Y_OFFSET = 20
-const TILES_X = 9  // x=8..16
-const TILES_Y = 9  // y=20..28
-const MAP_PX_W = TILES_X * TILE_SIZE  // 2304
-const MAP_PX_H = TILES_Y * TILE_SIZE  // 2304
+// 拼接地图尺寸 (9 tiles × 256px = 2304px)
+const MAP_PX = 2304
 
 // ---- 今昔对比点位 ----
 const comparisonPoints = [
@@ -90,39 +82,22 @@ onMounted(() => {
   // 创建 Leaflet 地图 (CRS.Simple = 像素坐标系)
   map = L.map(mapContainer.value, {
     crs: L.CRS.Simple,
-    minZoom: -1,
-    maxZoom: 1,
-    zoom: 0,
+    zoomSnap: 0.5,
+    wheelPxPerZoomLevel: 120,
     zoomControl: true,
     attributionControl: false,
   })
 
-  // 地图边界 (像素)
-  const bounds: L.LatLngBoundsExpression = [[0, 0], [MAP_PX_H, MAP_PX_W]]
-  map.fitBounds(bounds)
+  // 使用拼接好的全景校园地图
+  const imageBounds: L.LatLngBoundsExpression = [[0, 0], [MAP_PX, MAP_PX]]
+  const overlay = L.imageOverlay('/jinmen-xunmai/campus_map.jpg', imageBounds)
+  overlay.addTo(map)
+  map.fitBounds(imageBounds)
+  map.setMaxBounds(imageBounds)
 
-  // 自定义瓦片图层
-  class CampusTileLayer extends L.GridLayer {
-    createTile(coords: L.Coords, done: L.DoneCallback) {
-      const ourX = coords.x + X_OFFSET
-      const ourY = coords.y + Y_OFFSET
-      const src = `/jinmen-xunmai/map-tiles/zoom3/${ourX}_${ourY}.jpg`
-      const tile = document.createElement('img')
-      tile.src = src
-      tile.alt = ''
-      tile.setAttribute('role', 'presentation')
-      tile.onload = () => { done(undefined, tile) }
-      tile.onerror = () => { done(undefined, tile) }
-      return tile
-    }
-  }
-
-  const tileLayer = new CampusTileLayer({
-    tileSize: TILE_SIZE,
-    minZoom: -1,
-    maxZoom: 1,
-  })
-  map.addLayer(tileLayer)
+  // 限制地图不能拖出边界
+  const maxBounds: L.LatLngBoundsExpression = [[-256, -256], [MAP_PX + 256, MAP_PX + 256]]
+  map.setMaxBounds(maxBounds)
 
   // 添加今昔对比标记
   comparisonPoints.forEach(p => {
