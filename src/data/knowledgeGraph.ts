@@ -92,6 +92,10 @@ export const nodes: GraphNode[] = [
   { id: 'push',        label: '推送文集',         type: 'concept',     x: 50, y: 30, link: '/push-articles' },
   { id: 'qiushi',      label: '求实鼎新',         type: 'concept',     x: 80, y: 64 },
   { id: 'steel',       label: '钢铁强国',         type: 'concept',     x: 45, y: 45 },
+
+  // ── 老照片 ──
+  { id: 'photos',      label: '校史老照片',       type: 'concept',     x: 92, y: 82, link: '/archive?category=photo' },
+  { id: 'photo_history', label: '历史沿革',       type: 'concept',     x: 40, y: 60 },
 ]
 
 export const edges: GraphEdge[] = [
@@ -161,4 +165,12 @@ export const edges: GraphEdge[] = [
   // ── 推送 ──
   { source: 'push', target: 'practice', label: '记录' },
   { source: 'push', target: 'adjustment', label: '讲述' },
+
+  // ── 老照片 ──
+  { source: 'photos',        target: 'archive',       label: '收录于' },
+  { source: 'photos',        target: 'photo_history', label: '包含' },
+  { source: 'photo_history', target: 'founded',       label: '记录' },
+  { source: 'photo_history', target: 'renamed60',     label: '记录' },
+  { source: 'photo_history', target: 'renamed88',     label: '记录' },
+  { source: 'photo_history', target: 'adjustment',    label: '记录' },
 ]

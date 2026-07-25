@@ -27,7 +27,7 @@ const categories = [
 ]
 
 onMounted(() => {
-  // 从 sessionStorage 恢复筛选状态
+  // 从 sessionStorage 恢复筛选分类
   const saved = sessionStorage.getItem('archive_filter')
   if (saved) {
     try {
@@ -43,7 +43,16 @@ onMounted(() => {
   }
 })
 
-// 离开存档页面前保存筛选状态
+function goToArchive(id: string) {
+  // 跳转前保存筛选分类
+  sessionStorage.setItem('archive_filter', JSON.stringify({
+    category: activeCategory.value,
+    search: searchQuery.value,
+  }))
+  router.push('/archive/' + id)
+}
+
+// 离开存档页面前保存筛选分类
 onBeforeUnmount(() => {
   sessionStorage.setItem('archive_filter', JSON.stringify({
     category: activeCategory.value,
@@ -145,18 +154,24 @@ function initGraph() {
   starsGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3))
   scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, transparent: true, opacity: 0.5 })))
 
-  // 节点
-  const count = kgNodes.length
-  const radius = 170
-  const positions: THREE.Vector3[] = []
+  // 过滤掉人物节点（队员名和采访对象名）
+  const personIds = new Set(kgNodes.filter(n => n.type === 'person').map(n => n.id))
+  const filteredNodes = kgNodes.filter(n => n.type !== 'person')
+  const filteredEdges = kgEdges.filter(e => !personIds.has(e.source) && !personIds.has(e.target))
 
-  kgNodes.forEach((d, i) => {
+  // 节点
+  const count = filteredNodes.length
+  const radius = 170
+  const positionMap = new Map<string, THREE.Vector3>()
+
+  filteredNodes.forEach((d, i) => {
     const phi = Math.acos(1 - 2 * (i + 0.5) / count)
     const theta = Math.PI * (1 + Math.sqrt(5)) * i
     const x = radius * Math.sin(phi) * Math.cos(theta)
     const y = radius * Math.sin(phi) * Math.sin(theta) * 0.6
     const z = radius * Math.cos(phi)
-    positions.push(new THREE.Vector3(x, y, z))
+    const pos = new THREE.Vector3(x, y, z)
+    positionMap.set(d.id, pos)
 
     const color = getColor(d.type)
     const mat = new THREE.MeshPhysicalMaterial({
@@ -164,7 +179,7 @@ function initGraph() {
       emissive: color, emissiveIntensity: 0.08,
     })
     const sphere = new THREE.Mesh(new THREE.SphereGeometry(7, 20, 20), mat)
-    sphere.position.set(x, y, z)
+    sphere.position.copy(pos)
     sphere.userData = { id: d.id, label: d.label.replace('\\n', ' '), type: d.type }
     scene!.add(sphere)
     nodeMeshes.push(sphere)
@@ -190,12 +205,10 @@ function initGraph() {
     labelSprites.push(sprite)
   })
 
-  // 连线
-  kgEdges.forEach(e => {
-    const si = kgNodes.findIndex(n => n.id === e.source)
-    const ti = kgNodes.findIndex(n => n.id === e.target)
-    if (si < 0 || ti < 0) return
-    const p1 = positions[si], p2 = positions[ti]
+  // 连线（使用过滤后的边和位置映射）
+  filteredEdges.forEach(e => {
+    const p1 = positionMap.get(e.source)
+    const p2 = positionMap.get(e.target)
     if (!p1 || !p2) return
     const line = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([p1, p2]),
@@ -328,7 +341,7 @@ const typeColor: Record<string, string> = nodeColors
       </div>
 
       <div v-else class="card-grid">
-        <div v-for="item in filteredItems" :key="item.id" class="floating-card" @click="router.push('/archive/' + item.id)">
+        <div v-for="item in filteredItems" :key="item.id" class="floating-card" @click="goToArchive(item.id)">
           <div class="card-title">{{ item.title }}</div>
           <div class="card-subtitle">
             <span class="tag">{{ ({ photo: '老照片', 'manuscript-ustb': '手稿·北科', 'manuscript-tju': '手稿·天大', document: '文件', other: '其他', person: '人物', event: '事件', institution: '机构', concept: '概念' } as any)[item.category] }}</span>
