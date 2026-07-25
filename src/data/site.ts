@@ -20,9 +20,12 @@ export const siteConfig = {
   },
   // 成员职责
   teamRoles: {
-    leaders: '张雅童（副队长）、赵望成（副队长）',
-    promotion: '李雨桐（宣传组）',
-    copywriting: '马立菲（文案组）',
+    leader: '孙凯迪',
+    deputy: '张雅童、赵望成',
+    promotion: '宋品莹、李雨桐、王子衡',
+    design: '张雨萌',
+    copywriting: '张寒婷、马立菲',
+    dev: '施建锐',
   },
   // 社交媒体链接
   socialLinks: {

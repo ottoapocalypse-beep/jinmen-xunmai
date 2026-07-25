@@ -15,10 +15,16 @@ export const teamMembers: Member[] = [
     description: '统筹全局，审核各项产出，协调采访安排',
   },
   {
-    id: 'member-2',
-    name: '施建锐',
-    role: '程序组',
-    description: '网站搭建与维护',
+    id: 'member-7',
+    name: '张雅童',
+    role: '副队长',
+    description: '视频拍摄、剪辑与团队协调',
+  },
+  {
+    id: 'member-10',
+    name: '赵望成',
+    role: '副队长',
+    description: '校友联络、实地采访与团队协调',
   },
   {
     id: 'member-3',
@@ -29,7 +35,7 @@ export const teamMembers: Member[] = [
   {
     id: 'member-4',
     name: '李雨桐',
-    role: '文案组',
+    role: '宣传组',
     description: '预热推送撰稿与内容创作',
   },
   {
@@ -45,27 +51,21 @@ export const teamMembers: Member[] = [
     description: '队徽、吉祥物、文创及视觉设计',
   },
   {
-    id: 'member-7',
-    name: '张雅童',
-    role: '摄影组',
-    description: '视频拍摄、剪辑与微电影创作',
-  },
-  {
     id: 'member-8',
     name: '张寒婷',
     role: '文案组',
-    description: '微电影脚本撰写与文字创作',
+    description: '微电影脚本撰写、背景调查与采访稿',
   },
   {
     id: 'member-9',
     name: '马立菲',
-    role: '采访组',
+    role: '文案组',
     description: '采访背景调查、采访稿撰写与纪实整理',
   },
   {
-    id: 'member-10',
-    name: '赵望成',
-    role: '采访组',
-    description: '校友联络与实地采访执行',
+    id: 'member-2',
+    name: '施建锐',
+    role: '程序组',
+    description: '网站搭建与维护',
   },
 ]
