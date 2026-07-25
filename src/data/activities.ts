@@ -15,9 +15,16 @@ export const activities: Activity[] = [
   // 一、团队公共任务（序1～14）
   // ═══════════════════════════════════
   {
+    id: 'act-0',
+    title: '社会实践开始',
+    date: '2026-07-04',
+    summary: '津门寻脉小队正式投入社会实践工作，各项任务陆续启动。',
+    tags: ['动态', '启程'],
+  },
+  {
     id: 'act-1',
     title: '介绍推送完成',
-    date: '2026-07-11',
+    date: '2026-07-04',
     summary: '团队介绍推送发布。负责人：宋品莹，审核：孙凯迪。',
     link: 'https://mp.weixin.qq.com/s/HzjxSXjgTGitKw4I5pmZrA',
     tags: ['推送', '宣传'],
@@ -25,7 +32,7 @@ export const activities: Activity[] = [
   {
     id: 'act-2',
     title: '队徽设计完成',
-    date: '2026-07-11',
+    date: '2026-07-05',
     summary: '津门寻脉小队队徽设计定稿。负责人：张雨萌，审核：孙凯迪。',
     tags: ['设计', '视觉'],
   },
