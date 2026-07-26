@@ -21,8 +21,6 @@ const categories = [
   { key: 'concept', label: '概念' },
   { key: 'document', label: '文件' },
   { key: 'photo', label: '老照片' },
-  { key: 'manuscript-ustb', label: '手稿·北科' },
-  { key: 'manuscript-tju', label: '手稿·天大' },
   { key: 'other', label: '其他' },
 ]
 
@@ -306,7 +304,7 @@ const typeColor: Record<string, string> = nodeColors
     <div class="page-header">
       <h1>数字档案库</h1>
       <div class="page-title-en">Digital Archive</div>
-      <p>校史知识图谱 · 老照片 · 手稿 · 历史文件</p>
+      <p>校史知识图谱 · 老照片 · 历史文件</p>
     </div>
 
     <!-- 视图切换 -->
@@ -344,7 +342,7 @@ const typeColor: Record<string, string> = nodeColors
         <div v-for="item in filteredItems" :key="item.id" class="floating-card" @click="goToArchive(item.id)">
           <div class="card-title">{{ item.title }}</div>
           <div class="card-subtitle">
-            <span class="tag">{{ ({ photo: '老照片', 'manuscript-ustb': '手稿·北科', 'manuscript-tju': '手稿·天大', document: '文件', other: '其他', person: '人物', event: '事件', institution: '机构', concept: '概念' } as any)[item.category] }}</span>
+            <span class="tag">{{ ({ photo: '老照片', document: '文件', other: '其他', person: '人物', event: '事件', institution: '机构', concept: '概念' } as any)[item.category] }}</span>
             <span v-if="item.date" class="card-date">{{ item.date }}</span>
           </div>
           <div class="card-body">{{ item.description }}</div>

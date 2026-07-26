@@ -52,7 +52,7 @@ export const navItems: NavItem[] = [
   { path: '/activity', label: '实践动态', labelEn: 'Updates', icon: 'activity' },
   { path: '/media', label: '影像志', labelEn: 'Media', icon: 'media' },
   { path: '/archive', label: '数字档案库', labelEn: 'Archive', icon: 'archive' },
-  { path: '/map', label: '生活地图', labelEn: 'Map', icon: 'map' },
+  // { path: '/map', label: '生活地图', labelEn: 'Map', icon: 'map' },
   { path: '/cultural-products', label: '文创展示', labelEn: 'Cultural', icon: 'cultural' },
   { path: '/panorama', label: '720°全景', labelEn: 'Panorama', icon: 'panorama' },
   { path: '/push-articles', label: '推送文集', labelEn: 'Articles', icon: 'promotion' },
