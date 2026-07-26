@@ -10,14 +10,14 @@ async function initMap() {
 
   if (!mapContainer.value) return
 
-  // 使用预拼接的 zoom3 瓦片底图 (2304×2304, 仅本部校区)
+  // 使用预拼接的 zoom4 瓦片底图 (2816×2816, 仅本部校区, 细节更丰富)
   map = L.map(mapContainer.value, {
     crs: L.CRS.Simple,
     zoomControl: true,
     attributionControl: false,
   })
 
-  const bounds = L.latLngBounds([0, 0], [2304, 2304])
+  const bounds = L.latLngBounds([0, 0], [2816, 2816])
   const overlay = L.imageOverlay('/jinmen-xunmai/campus_map.jpg', bounds)
   overlay.addTo(map)
   map.fitBounds(bounds)
