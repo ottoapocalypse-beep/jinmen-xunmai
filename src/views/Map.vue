@@ -1,4 +1,31 @@
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+
+const mapContainer = ref<HTMLElement | null>(null)
+let map: L.Map | null = null
+
+async function initMap() {
+  const L = (await import('leaflet')).default
+  await import('leaflet/dist/leaflet.css')
+
+  if (!mapContainer.value) return
+
+  // 使用预拼接的 zoom3 瓦片底图 (2304×2304, 仅本部校区)
+  map = L.map(mapContainer.value, {
+    crs: L.CRS.Simple,
+    zoomControl: true,
+    attributionControl: false,
+  })
+
+  const bounds = L.latLngBounds([0, 0], [2304, 2304])
+  const overlay = L.imageOverlay('/jinmen-xunmai/campus_map.jpg', bounds)
+  overlay.addTo(map)
+  map.fitBounds(bounds)
+  map.setMaxBounds(bounds)
+}
+
+onMounted(() => { initMap() })
+onUnmounted(() => { map?.remove() })
 </script>
 
 <template>
@@ -6,23 +33,9 @@
     <div class="page-header">
       <h1>生活地图</h1>
       <div class="page-title-en">Campus Map</div>
-      <p>校园GIS · 数字孪生</p>
+      <p>官方瓦片 · 本部校区</p>
     </div>
-
-    <div class="map-wrapper">
-      <iframe
-        src="https://map.ustb.edu.cn/2d/"
-        class="map-iframe"
-        title="北京科技大学校园地图"
-        allowfullscreen
-        loading="lazy"
-        referrerpolicy="no-referrer"
-      />
-    </div>
-
-    <div class="map-footer">
-      <p>数据来源：<a href="https://map.ustb.edu.cn/2d/" target="_blank" rel="noopener">北京科技大学智慧校园GIS可视化平台</a></p>
-    </div>
+    <div ref="mapContainer" class="leaflet-map"></div>
   </div>
 </template>
 
@@ -31,46 +44,17 @@
   max-width: var(--content-max-width);
   margin: 0 auto;
 }
-
-.map-wrapper {
+.leaflet-map {
   width: 100%;
-  height: 600px;
+  height: 560px;
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-border);
   background: #1a1a2e;
 }
-
-.map-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-.map-footer {
-  margin-top: var(--space-sm);
-  text-align: center;
-}
-
-.map-footer p {
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  color: var(--color-text-light);
-}
-
-.map-footer a {
-  color: var(--color-gold-dark);
-  text-decoration: none;
-}
-
-.map-footer a:hover {
-  text-decoration: underline;
-}
-
+:deep(.leaflet-container) { font-family: var(--font-sans); }
 @media (max-width: 768px) {
-  .map-wrapper {
-    height: 400px;
-  }
+  .leaflet-map { height: 360px; }
 }
 </style>
