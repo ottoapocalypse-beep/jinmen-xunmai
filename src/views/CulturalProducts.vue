@@ -7,17 +7,13 @@ const activeCategory = ref<string>('all')
 
 const categoryIcons: Record<string, string> = {
   badge: '🏅',
-  mascot: '🧸',
   emoji: '😊',
-  product: '🎨',
 }
 
 const categories = [
   { key: 'all', label: '全部' },
   { key: 'badge', label: '队徽' },
-  { key: 'mascot', label: '吉祥物' },
   { key: 'emoji', label: '表情包' },
-  { key: 'product', label: '文创产品' },
 ]
 
 const filteredProducts = culturalProducts.filter(p =>
@@ -32,7 +28,7 @@ function openModal(img: string) { modalImg.value = img }
     <div class="page-header">
       <h1>文创展示</h1>
       <div class="page-title-en">Cultural Products</div>
-      <p>队徽 · 吉祥物 · 表情包 · 文创产品</p>
+      <p>队徽 · 表情包</p>
     </div>
 
     <!-- 分类切换 -->
