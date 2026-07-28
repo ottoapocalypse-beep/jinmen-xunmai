@@ -5,19 +5,19 @@ import HeroCarousel from '@/components/HeroCarousel.vue'
 import type { CarouselSlide } from '@/components/HeroCarousel.vue'
 import KnowledgeGraph from '@/components/KnowledgeGraph.vue'
 
-/** 占位轮播图 — 用 picsum.photos 生成与主题相关的随机图片 */
+/** 轮播背景 */
 const heroSlides: CarouselSlide[] = [
   {
-    bg: 'url(https://picsum.photos/seed/jinmen-campus/1400/700)',
+    bg: 'url(/jinmen-xunmai/assets/hero-bg-1.png)',
     label: '校园风貌',
   },
   {
-    bg: 'url(https://picsum.photos/seed/jinmen-archive/1400/700)',
+    bg: 'url(/jinmen-xunmai/assets/hero-bg-2.png)',
     label: '档案史料',
   },
   {
-    bg: 'url(https://picsum.photos/seed/jinmen-interview/1400/700)',
-    label: '访谈纪实',
+    bg: 'url(/jinmen-xunmai/assets/hero-bg-3.jpg)',
+    label: '团队合影',
   },
 ]
 </script>
