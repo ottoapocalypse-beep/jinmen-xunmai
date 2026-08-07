@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { culturalProducts } from '@/data/culturalProducts'
 
 const modalImg = ref<string | null>(null)
@@ -16,8 +16,10 @@ const categories = [
   { key: 'emoji', label: '表情包' },
 ]
 
-const filteredProducts = culturalProducts.filter(p =>
-  activeCategory.value === 'all' || p.category === activeCategory.value
+const filteredProducts = computed(() =>
+  culturalProducts.filter(p =>
+    activeCategory.value === 'all' || p.category === activeCategory.value
+  )
 )
 
 function openModal(img: string) { modalImg.value = img }
