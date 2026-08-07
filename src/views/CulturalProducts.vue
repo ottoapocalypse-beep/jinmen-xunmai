@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { culturalProducts } from '@/data/culturalProducts'
+import NavIcon from '@/components/NavIcon.vue'
 
 const modalImg = ref<string | null>(null)
 const activeCategory = ref<string>('all')
 
-const categoryIcons: Record<string, string> = {
-  badge: '🏅',
-  emoji: '😊',
+const categoryIcons: Record<string, 'badge' | 'smile'> = {
+  badge: 'badge',
+  emoji: 'smile',
 }
 
 const categories = [
@@ -45,7 +46,10 @@ function openModal(img: string) { modalImg.value = img }
     <!-- 展示区域 -->
     <div v-for="item in filteredProducts" :key="item.id" class="product-section">
       <div class="section-header">
-        <h2>{{ categoryIcons[item.category] }} {{ item.name }}</h2>
+        <h2 class="section-title-icon">
+          <NavIcon :name="categoryIcons[item.category]" :size="24" />
+          <span>{{ item.name }}</span>
+        </h2>
         <p class="section-desc">{{ item.description }}</p>
       </div>
 
@@ -127,6 +131,9 @@ function openModal(img: string) { modalImg.value = img }
 }
 
 .section-header h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
   font-size: 1.3rem;
   color: var(--color-primary-dark);
   margin-bottom: var(--space-xs);

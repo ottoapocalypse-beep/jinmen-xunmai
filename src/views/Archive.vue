@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { archiveItems } from '@/data/archive'
 import { nodes as kgNodes, edges as kgEdges, nodeColors } from '@/data/knowledgeGraph'
+import NavIcon from '@/components/NavIcon.vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
@@ -76,25 +77,25 @@ const detailInfo = ref<{ label: string; type: string; id: string; related: strin
 
 // 图谱关联 → 数据库条目映射
 const nodeToArchive: Record<string, { title: string; link: string }[]> = {
-  tju: [{ title: '📖 查看档案：天津大学', link: '#/archive/arch-inst-2' }],
-  ustb: [{ title: '📖 查看档案：北京科技大学', link: '#/archive/arch-inst-5' }],
-  byang: [{ title: '📖 查看档案：北洋西学学堂', link: '#/archive/arch-inst-1' }],
-  bis: [{ title: '📖 查看档案：北京钢铁工业学院', link: '#/archive/arch-inst-3' }],
-  bis2: [{ title: '📖 查看档案：北京钢铁学院', link: '#/archive/arch-inst-4' }],
-  adjustment: [{ title: '📖 查看档案：1952年院系调整', link: '#/archive/arch-ev-1' }],
-  founded: [{ title: '📖 查看档案：建校历程', link: '#/archive/arch-ev-2' }],
-  practice: [{ title: '📖 查看档案：社会实践', link: '#/archive/arch-ev-3' }],
-  prof_xiao: [{ title: '📖 查看档案：肖纪美院士', link: '#/archive/arch-person-1' }],
-  materials: [{ title: '📖 查看档案：材料学科', link: '#/archive/arch-inst-6' }],
-  museum: [{ title: '📖 查看档案：校史馆', link: '#/archive/arch-inst-7' }],
-  casting: [{ title: '📖 查看档案：铸造与材料成型', link: '#/archive/arch-concept-3' }],
-  metallurgy: [{ title: '📖 查看档案：冶金工程', link: '#/archive/arch-concept-1' }],
-  mining: [{ title: '📖 查看档案：采矿工程', link: '#/archive/arch-concept-2' }],
-  manjing_loc: [{ title: '📖 查看档案：满井村', link: '#/archive/arch-concept-4' }],
-  qiushi: [{ title: '📖 查看档案：求实鼎新', link: '#/archive/arch-concept-5' }],
-  steel: [{ title: '📖 查看档案：钢铁强国', link: '#/archive/arch-concept-6' }],
-  oral: [{ title: '📖 查看档案：口述史', link: '#/archive/arch-concept-7' }],
-  push: [{ title: '📖 查看档案：推送文集', link: '#/archive/arch-doc-1' }],
+  tju: [{ title: '查看档案：天津大学', link: '#/archive/arch-inst-2' }],
+  ustb: [{ title: '查看档案：北京科技大学', link: '#/archive/arch-inst-5' }],
+  byang: [{ title: '查看档案：北洋西学学堂', link: '#/archive/arch-inst-1' }],
+  bis: [{ title: '查看档案：北京钢铁工业学院', link: '#/archive/arch-inst-3' }],
+  bis2: [{ title: '查看档案：北京钢铁学院', link: '#/archive/arch-inst-4' }],
+  adjustment: [{ title: '查看档案：1952年院系调整', link: '#/archive/arch-ev-1' }],
+  founded: [{ title: '查看档案：建校历程', link: '#/archive/arch-ev-2' }],
+  practice: [{ title: '查看档案：社会实践', link: '#/archive/arch-ev-3' }],
+  prof_xiao: [{ title: '查看档案：肖纪美院士', link: '#/archive/arch-person-1' }],
+  materials: [{ title: '查看档案：材料学科', link: '#/archive/arch-inst-6' }],
+  museum: [{ title: '查看档案：校史馆', link: '#/archive/arch-inst-7' }],
+  casting: [{ title: '查看档案：铸造与材料成型', link: '#/archive/arch-concept-3' }],
+  metallurgy: [{ title: '查看档案：冶金工程', link: '#/archive/arch-concept-1' }],
+  mining: [{ title: '查看档案：采矿工程', link: '#/archive/arch-concept-2' }],
+  manjing_loc: [{ title: '查看档案：满井村', link: '#/archive/arch-concept-4' }],
+  qiushi: [{ title: '查看档案：求实鼎新', link: '#/archive/arch-concept-5' }],
+  steel: [{ title: '查看档案：钢铁强国', link: '#/archive/arch-concept-6' }],
+  oral: [{ title: '查看档案：口述史', link: '#/archive/arch-concept-7' }],
+  push: [{ title: '查看档案：推送文集', link: '#/archive/arch-doc-1' }],
   jinmen: [{ title: '关于实践 →', link: '#/about' }],
 }
 
@@ -310,10 +311,12 @@ const typeColor: Record<string, string> = nodeColors
     <!-- 视图切换 -->
     <div class="view-toggle">
       <button :class="['toggle-btn', { active: viewMode === 'list' }]" @click="switchMode('list')">
-        📋 列表
+        <NavIcon name="list" :size="16" />
+        <span>列表</span>
       </button>
       <button :class="['toggle-btn', { active: viewMode === 'graph' }]" @click="switchMode('graph')">
-        🌐 知识图谱
+        <NavIcon name="graph" :size="16" />
+        <span>知识图谱</span>
       </button>
     </div>
 
@@ -333,7 +336,7 @@ const typeColor: Record<string, string> = nodeColors
       </div>
 
       <div v-if="filteredItems.length === 0" class="empty-state">
-        <div class="empty-icon">📄</div>
+        <div class="empty-icon"><NavIcon name="empty" :size="40" /></div>
         <div class="empty-text">暂无匹配的档案资料</div>
         <div class="empty-hint">切换到「知识图谱」模式浏览校史知识网络</div>
       </div>
@@ -382,7 +385,8 @@ const typeColor: Record<string, string> = nodeColors
               <a v-for="(item, i) in nodeToArchive[detailInfo.id]" :key="i"
                 :href="item.link" target="_blank" rel="noopener noreferrer"
                 class="detail-link">
-                {{ item.title }}
+                <NavIcon name="archive" :size="14" />
+                <span>{{ item.title }}</span>
               </a>
             </div>
             <div v-else-if="detailInfo.type === 'person'" class="detail-links">
@@ -419,6 +423,9 @@ const typeColor: Record<string, string> = nodeColors
   display: flex; gap: var(--space-sm); margin-bottom: var(--space-lg);
 }
 .toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
   padding: var(--space-xs) var(--space-lg);
   border-radius: var(--radius-md);
   font-family: var(--font-sans); font-size: 0.9rem;
@@ -461,7 +468,7 @@ const typeColor: Record<string, string> = nodeColors
 }
 
 .empty-state { text-align: center; padding: var(--space-3xl); color: var(--color-text-light); }
-.empty-icon { font-size: 2.5rem; margin-bottom: var(--space-sm); }
+.empty-icon { display: flex; justify-content: center; margin-bottom: var(--space-sm); }
 .empty-text { font-family: var(--font-sans); font-size: 0.95rem; }
 .empty-hint { font-family: var(--font-sans); font-size: 0.8rem; color: var(--color-text-secondary); margin-top: var(--space-sm); }
 
@@ -525,6 +532,9 @@ const typeColor: Record<string, string> = nodeColors
 
 .detail-links { display: flex; flex-direction: column; gap: var(--space-xs); }
 .detail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-family: var(--font-sans); font-size: 0.85rem;
   color: var(--color-gold-dark); text-decoration: underline;
   transition: opacity var(--transition-fast);
