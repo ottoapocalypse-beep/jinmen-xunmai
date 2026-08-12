@@ -325,4 +325,56 @@ export const activities: Activity[] = [
     summary: '刘国权老师采访视频。负责人：张雅童、孙凯迪。',
     tags: ['采访', '视频'],
   },
+
+  // ═══════════════════════════════════
+  // 四、推送发布记录（以实际发布日为准）
+  // ═══════════════════════════════════
+  {
+    id: 'act-43',
+    title: '褚幼义教授对话（上）推送发布',
+    date: '2026-08-06',
+    summary: '推送《工棚铸魂：与褚幼义教授对话（上）》发布。',
+    link: 'https://mp.weixin.qq.com/s/6uHvnpdSFnbu0qIZkXlbOA',
+    tags: ['推送', '采访'],
+  },
+  {
+    id: 'act-44',
+    title: '褚幼义教授对话（下）推送发布',
+    date: '2026-08-07',
+    summary: '推送《薪火相传：与褚幼义教授的对话（下）》发布。',
+    link: 'https://mp.weixin.qq.com/s/DkhoSouGAZwimzExwMtFdQ',
+    tags: ['推送', '采访'],
+  },
+  {
+    id: 'act-45',
+    title: '走进北科大校史馆推送发布',
+    date: '2026-08-09',
+    summary: '推送《步履承文脉，薪火照初心：走进北科大校史馆》发布。',
+    link: 'https://mp.weixin.qq.com/s/rmJ79yboNhIqOyYjlidtbA',
+    tags: ['推送', '校史馆'],
+  },
+  {
+    id: 'act-46',
+    title: '中期总结推送发布',
+    date: '2026-08-09',
+    summary: '推送《实践风采——中期总结：半程踏迹藏薪火，口述校史续钢魂》发布。',
+    link: 'https://mp.weixin.qq.com/s/S0fU49Lc-d7YgoE8GWPc2Q',
+    tags: ['推送', '中期总结'],
+  },
+  {
+    id: 'act-47',
+    title: '李福燊、李丽芬夫妇专访推送发布',
+    date: '2026-08-11',
+    summary: '推送《执子之手，守望钢院——李福燊、李丽芬夫妇专访纪实》发布。',
+    link: 'https://mp.weixin.qq.com/s/rrvhqMlxUGdAY-XYWJzl1w',
+    tags: ['推送', '采访'],
+  },
+  {
+    id: 'act-48',
+    title: '网站介绍推送发布',
+    date: '2026-08-11',
+    summary: '推送《代码藏校史，一页读懂津门溯源之路》发布，数字档案馆正式上线。',
+    link: 'https://mp.weixin.qq.com/s/p-8v80b8B5NaawIKVTO4PA',
+    tags: ['推送', '网站'],
+  },
 ]
