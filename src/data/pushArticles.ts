@@ -212,4 +212,13 @@ export const pushArticles: PushArticle[] = [
     chunks: 1,
     tags: ['推送', '网站'],
   },
+  {
+    id: 'push-23',
+    title: '津门寻脉 | 我们的暑期社会实践，杀青啦！',
+    date: '2026-08-14',
+    summary: '收官之作！从走进天大档案馆、访谈老教授到寻访两校校史馆，从设计文创、拍摄微电影到搭建数字展厅小程序——累计访谈老教授8人次、录制访谈15小时+、拍摄史料照片674张+。津门寻脉，虽已收官，但精神永续，薪火相传！',
+    link: 'https://mp.weixin.qq.com/s/7hRFJU6dE76zA2wWaEJXPw',
+    chunks: 12,
+    tags: ['推送', '收官'],
+  },
 ]
