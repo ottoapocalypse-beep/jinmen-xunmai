@@ -27,9 +27,9 @@
   --color-shadow: rgba(2, 45, 92, 0.08);
   --color-shadow-hover: rgba(2, 45, 92, 0.15);
 
-  /* ========== 字体 ========== */
-  --font-serif: 'Noto Serif SC', 'SimSun', 'STSong', serif;
-  --font-sans: 'Inter', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  /* ========== 字体（系统字体栈，避免依赖国外字体 CDN 阻塞渲染） ========== */
+  --font-serif: 'Songti SC', 'SimSun', 'STSong', 'Noto Serif CJK SC', serif;
+  --font-sans: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'Noto Sans CJK SC', sans-serif;
 
   /* ========== 间距 ========== */
   --sidebar-width: 240px;

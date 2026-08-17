@@ -11,6 +11,30 @@ const dims = ref({ w: 800, h: 520 })
 
 let simulation: d3.Simulation<d3.SimulationNodeDatum, undefined> | null = null
 let particleInterval: number | null = null
+let particlesRunning = false
+let visibleObserver: IntersectionObserver | null = null
+
+// 粒子动画相关（提升到组件级，供 IntersectionObserver 控制启停）
+let particles: { element: d3.Selection<SVGCircleElement, unknown, null, undefined>; progress: number; speed: number }[] = []
+let graphNodes: any[] = []
+let graphLinks: any[] = []
+
+function animateParticles() {
+  if (!particlesRunning) return
+  particles.forEach((p, i) => {
+    p.progress += p.speed
+    if (p.progress > 1) p.progress = 0
+    const link = graphLinks[i]
+    const s = typeof link.source === 'object' ? link.source : graphNodes.find((n: any) => n.id === link.source)
+    const t = typeof link.target === 'object' ? link.target : graphNodes.find((n: any) => n.id === link.target)
+    if (s && t && 'x' in s && 'y' in t) {
+      const x = (s as any).x + ((t as any).x - (s as any).x) * p.progress
+      const y = (s as any).y + ((t as any).y - (s as any).y) * p.progress
+      p.element.attr('cx', x).attr('cy', y)
+    }
+  })
+  particleInterval = requestAnimationFrame(animateParticles)
+}
 
 function updateDims() {
   if (containerRef.value) {
@@ -26,10 +50,24 @@ onMounted(() => {
     containerRef.value.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false })
   }
   initGraph()
+  // 离开视口时暂停粒子动画，避免持续占用 CPU
+  visibleObserver = new IntersectionObserver((entries) => {
+    const visible = entries[0]?.isIntersecting ?? true
+    if (visible && !particlesRunning) {
+      particlesRunning = true
+      animateParticles()
+    } else if (!visible && particlesRunning) {
+      particlesRunning = false
+      if (particleInterval) cancelAnimationFrame(particleInterval)
+      particleInterval = null
+    }
+  })
+  if (containerRef.value) visibleObserver.observe(containerRef.value)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateDims)
+  visibleObserver?.disconnect()
   if (simulation) simulation.stop()
   if (particleInterval) cancelAnimationFrame(particleInterval)
 })
@@ -65,6 +103,8 @@ function initGraph() {
     target: e.target,
     label: e.label,
   }))
+  graphNodes = nodes
+  graphLinks = links
 
   // 创建 SVG
   const svg = d3.select(containerRef.value)
@@ -128,7 +168,7 @@ function initGraph() {
   const particleGroup = zoomGroup.append('g').attr('class', 'particles')
 
   // 为每条边创建粒子
-  const particles: { element: d3.Selection<SVGCircleElement, unknown, null, undefined>; progress: number; speed: number }[] = []
+  particles = []
   links.forEach(() => {
     const p = particleGroup.append('circle')
       .attr('r', 2.5)
@@ -140,24 +180,6 @@ function initGraph() {
       speed: 0.002 + Math.random() * 0.003,
     })
   })
-
-  // 粒子动画
-  function animateParticles() {
-    particles.forEach((p, i) => {
-      p.progress += p.speed
-      if (p.progress > 1) p.progress = 0
-      const link = links[i]
-      const s = typeof link.source === 'object' ? link.source : nodes.find(n => n.id === link.source)
-      const t = typeof link.target === 'object' ? link.target : nodes.find(n => n.id === link.target)
-      if (s && t && 'x' in s && 'y' in t) {
-        const x = (s as any).x + ((t as any).x - (s as any).x) * p.progress
-        const y = (s as any).y + ((t as any).y - (s as any).y) * p.progress
-        p.element.attr('cx', x).attr('cy', y)
-      }
-    })
-    particleInterval = requestAnimationFrame(animateParticles)
-  }
-  animateParticles()
 
   // ---- 节点 ----
   const nodeGroup = zoomGroup.append('g').attr('class', 'nodes')
